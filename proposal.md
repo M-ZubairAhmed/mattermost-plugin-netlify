@@ -5,7 +5,6 @@
     
 </p>
 
-![blue-line](https://i.imgur.com/cETzBqq.png)
 
 Competition : [Mattermost Bot Hackfest Jan 2020](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
 
@@ -18,8 +17,6 @@ Theme : ChatOps
 Proposal : [Hackerearth's idea section](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/dashboard/2abe565/idea/)
 
 Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/dashboard/2abe565/submission/)
-
-![blue-line](https://i.imgur.com/cETzBqq.png)
 
 ## Table of Contents
 
