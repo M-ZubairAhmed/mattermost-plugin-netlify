@@ -1,7 +1,8 @@
 <p align="center">
+        <img src="https://user-images.githubusercontent.com/17708702/73535585-ce0d3800-441b-11ea-8187-1ea83a9cce32.png" alt="repo image" width="400" height="80" />
    <h1 align="center">Mattermost Netlify Bot</h1>
   <h5 align="center"><i>Proposal for Mattermost Netlify Bot for Mattermost Hackathon</i></h5>
-    <img src="https://user-images.githubusercontent.com/17708702/73532518-c39b7000-4414-11ea-92e1-e4867a029ed3.png" alt="repo image" width="900" height="500" />
+    
 </p>
 
 ![blue-line](https://i.imgur.com/cETzBqq.png)
@@ -41,6 +42,7 @@ Mattermost Netlify bot is an intermediary agent between your netlify and matterm
 ### Features :key:
 
 #### /install
+
 
 
 ### Approach :fast_forward:
