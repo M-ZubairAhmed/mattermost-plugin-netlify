@@ -72,3 +72,4 @@ Get notified when build is started, fails or succeeds.
 Netlify form enabled sites can inform when there are new form submissions
 
 ### Development approach :fast_forward:
+Bot will be developed on Mattermost platform via [Mattermost Plugin](https://developers.mattermost.com/extend/plugins/). API's of Netlify will be integrated by [Netlify Go API Client](https://github.com/netlify/open-api#go-client)
