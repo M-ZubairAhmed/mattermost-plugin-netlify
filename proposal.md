@@ -28,7 +28,7 @@ Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-b
 ![blue-line](https://i.imgur.com/cETzBqq.png)
 
 ### :book: Summary
-Mattermost Netlify bot is an intermediary agent between your netlify
+Mattermost Netlify bot is an intermediary agent between your netlify and mattermost account. It makes it easy to monitor and interact with your netlify's resources all within your team's channel. Once integrated with your mattermost channel, team can start recieving various Netlify notifications such as netlify form submissions, build failures etc and can run commands to redeploy, see build stats, create hooks and much more.
 
 ### :interrobang: Problem Statement
 
