@@ -4,7 +4,7 @@
     <img src="https://user-images.githubusercontent.com/17708702/73532518-c39b7000-4414-11ea-92e1-e4867a029ed3.png" alt="repo image" width="900" height="500" />
 </p>
 
-![sepia-line](https://i.imgur.com/NuYL2xl.png)
+![blue-line](https://i.imgur.com/cETzBqq.png)
 
 Competition : [Mattermost Bot Hackfest Jan 2020](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
 
@@ -16,7 +16,7 @@ Proposal : [Hackerearth's idea section](https://www.hackerearth.com/challenges/h
 
 Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/dashboard/2abe565/submission/)
 
-![sepia-line](https://i.imgur.com/NuYL2xl.png)
+![blue-line](https://i.imgur.com/cETzBqq.png)
 
 ## Table of Contents
 
@@ -24,6 +24,8 @@ Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-b
  - [Problem statement](#interrobang-problem-statement)
  - [Features](#key-features)
  - [Approach](#fast_forward-approach)
+
+![blue-line](https://i.imgur.com/cETzBqq.png)
 
 ### :book: Summary
 Mattermost Netlify bot is an intermediary agent between your netlify
