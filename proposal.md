@@ -51,8 +51,24 @@ Connects your Mattermost account with your Netlif's account
 Disconnects your Netlif's account from Mattermost
 
 #### Command : `/subscribe`
-Manage webhook notifications of Netlify's sites to post in Mattermost channels.
+Manages webhook notifications of Netlify's sites to post in Mattermost channels.
 
+#### Command : `/build`
+Triggers build for Netlify site
 
+#### Command : `/logs`
+Gets build logs of the site.
+
+#### Command : `/notifications`
+Create and manage notifications for events such as deploy-started, deploy-failed etc for Netlify's site
+
+#### Command : `/site`
+Manage basic site settings such as SSL, DNS, processing settings etc.
+
+#### Deploy Notifications
+Get notified when build is started, fails or succeeds.
+
+#### Form Notifications
+Netlify form enabled sites can inform when there are new form submissions
 
 ### Approach :fast_forward:
