@@ -23,7 +23,7 @@ Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-b
  - [Summary](#summary-book)
  - [Problem statement](#problem-statement-interrobang)
  - [Features](#features-key)
- - [Approach](#approach-fast_forward)
+ - [Approach](#development-approach-fast_forward)
 
 ![blue-line](https://i.imgur.com/cETzBqq.png)
 
@@ -71,4 +71,4 @@ Get notified when build is started, fails or succeeds.
 #### Form Notifications
 Netlify form enabled sites can inform when there are new form submissions
 
-### Approach :fast_forward:
+### Development approach :fast_forward:
