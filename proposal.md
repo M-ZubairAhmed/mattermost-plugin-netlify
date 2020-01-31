@@ -20,10 +20,10 @@ Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-b
 
 ## Table of Contents
 
- - [1. Summary](#1-features)
- - [2. Problem statement](#2-configuration)
- - [3. Features](#3-jira-v2-roadmap)
- - [4. Approach](#4-development)
+ - [Summary](#book-summary)
+ - [Problem statement](#interrobang-problem-statement)
+ - [Features](#key-features)
+ - [Approach](#fast-forward-approach)
 
 ### :book: Summary
 Mattermost Netlify bot is an intermediary agent between your netlify 
