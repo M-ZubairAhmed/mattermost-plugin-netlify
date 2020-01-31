@@ -1,7 +1,7 @@
 <p align="center">
    <h1 align="center">Mattermost Netlify Bot</h1>
-  <img src="https://user-images.githubusercontent.com/17708702/73532518-c39b7000-4414-11ea-92e1-e4867a029ed3.png" alt="repo image" width="900" height="500" />
   <h5 align="center"><i>Proposal for Mattermost Netlify Bot for Mattermost Hackathon</i></h5>
+    <img src="https://user-images.githubusercontent.com/17708702/73532518-c39b7000-4414-11ea-92e1-e4867a029ed3.png" alt="repo image" width="900" height="500" />
 </p>
 
 ![sepia-line](https://i.imgur.com/NuYL2xl.png)
