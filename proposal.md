@@ -18,25 +18,18 @@ Proposal : [Hackerearth's idea section](https://www.hackerearth.com/challenges/h
 
 Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/dashboard/2abe565/submission/)
 
-## Table of Contents
-
- - [Summary](#summary-book)
- - [Problem statement](#problem-statement-interrobang)
- - [Features](#features-key)
- - [Approach](#development-approach-fast_forward)
-
 ![blue-line](https://i.imgur.com/cETzBqq.png)
 
-### Summary :book:
+## Summary :book:
 Mattermost Netlify bot is an intermediary agent between your netlify and mattermost account. It makes it easy to monitor and interact with your netlify's resources all within your team's channel. Once integrated with your mattermost channel, team can start recieving various Netlify notifications such as netlify form submissions, build failures etc and can run commands to redeploy, see build stats, create hooks and much more.
 
-### Problem Statement :interrobang:
+## Problem Statement :interrobang:
 
 - Familiar interface : System admins can manage netlify configuration right from the chat window with which they are familiar with.
 - Critical notification to team : Concerned teams are notified of the issue which makes it easier to plan and execute the solution rapidly.
 - System health and monitoring on the fly.
 
-### Features :key:
+## Features :key:
 
 All commands start with prefix *netlify*
 
@@ -44,32 +37,32 @@ All commands start with prefix *netlify*
 /netlify command-name
 ```
 
-#### Command : `/connect`
+### Command : `/connect`
 Connects your Mattermost account with your Netlif's account
 
-#### Command : `/disconnect`
+### Command : `/disconnect`
 Disconnects your Netlif's account from Mattermost
 
-#### Command : `/subscribe`
+### Command : `/subscribe`
 Manages webhook notifications of Netlify's sites to post in Mattermost channels.
 
-#### Command : `/build`
+### Command : `/build`
 Triggers build for Netlify site
 
-#### Command : `/logs`
+### Command : `/logs`
 Gets build logs of the site.
 
-#### Command : `/notifications`
+### Command : `/notifications`
 Create and manage notifications for events such as deploy-started, deploy-failed etc for Netlify's site
 
-#### Command : `/site`
+### Command : `/site`
 Manage basic site settings such as SSL, DNS, processing settings etc.
 
-#### Deploy Notifications
+### Deploy Notifications
 Get notified when build is started, fails or succeeds.
 
-#### Form Notifications
+### Form Notifications
 Netlify form enabled sites can inform when there are new form submissions
 
-### Development approach :fast_forward:
+## Development approach :fast_forward:
 Bot will be developed on Mattermost platform via [Mattermost Plugin](https://developers.mattermost.com/extend/plugins/). API's of Netlify will be integrated by [Netlify Go API Client](https://github.com/netlify/open-api#go-client)
