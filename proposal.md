@@ -38,8 +38,21 @@ Mattermost Netlify bot is an intermediary agent between your netlify and matterm
 
 ### Features :key:
 
+All commands start with prefix *netlify*
+
+``` txt
+/netlify command-name
+```
+
 #### Command : `/connect`
-Connect
+Connects your Mattermost account with your Netlif's account
+
+#### Command : `/disconnect`
+Disconnects your Netlif's account from Mattermost
+
+#### Command : `/subscribe`
+Manage webhook notifications of Netlify's sites to post in Mattermost channels.
+
 
 
 ### Approach :fast_forward:
