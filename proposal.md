@@ -38,8 +38,8 @@ Mattermost Netlify bot is an intermediary agent between your netlify and matterm
 
 ### Features :key:
 
-#### /install
-
+#### Command : `/connect`
+Connect
 
 
 ### Approach :fast_forward:
