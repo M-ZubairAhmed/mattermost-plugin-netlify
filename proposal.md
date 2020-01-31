@@ -23,13 +23,13 @@ Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-b
  - [Summary](#book-summary)
  - [Problem statement](#interrobang-problem-statement)
  - [Features](#key-features)
- - [Approach](#fast-forward-approach)
+ - [Approach](#fast_forward-approach)
 
 ### :book: Summary
-Mattermost Netlify bot is an intermediary agent between your netlify 
+Mattermost Netlify bot is an intermediary agent between your netlify
+
 ### :interrobang: Problem Statement
 
 ### :key: Features
--
 
 ### :fast_forward: Approach
