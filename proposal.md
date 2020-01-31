@@ -12,5 +12,11 @@ Proposal : [Hackerearth's idea section](https://www.hackerearth.com/challenges/h
 
 Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/dashboard/2abe565/submission/)
 
+## :book: Summary
+This bot enables the system administers to manage thier netlify hosted application from the ease of Mattermost chat window.
 
+## :interrobang: Problem Statement
 
+## :key: Features
+
+## :fast_forward: Approach
