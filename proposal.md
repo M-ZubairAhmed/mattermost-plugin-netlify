@@ -38,31 +38,31 @@ All commands start with prefix *netlify*
 ```
 
 #### :pencil2: Command : `/connect`
-Connects your Mattermost account with your Netlif's account
+Connects your Netlify's account into Mattermost.
 
 #### :pencil2: Command : `/disconnect`
-Disconnects your Netlif's account from Mattermost
+Disconnects your Netlify's account from Mattermost.
 
 #### :pencil2: Command : `/subscribe`
-Manages webhook notifications of Netlify's sites to post in Mattermost channels.
+Manages Mattermost channels which are subscribed to notifications from Netlify.
 
 #### :pencil2: Command : `/build`
-Triggers build for Netlify site
+Triggers build for sites.
 
 #### :pencil2: Command : `/logs`
 Gets build logs of the site.
 
 #### :pencil2: Command : `/notifications`
-Create and manage notifications for events such as deploy-started, deploy-failed etc for Netlify's site
+Create and manage notifications for events such as deploy-started, deploy-failed and more for your site.
 
 #### :pencil2: Command : `/site`
-Manage basic site settings such as SSL, DNS, processing settings etc.
+Manage site settings such as SSL, DNS, processing settings etc.
 
 #### :bell: Deploy Notifications
-Get notified when build is started, fails or succeeds.
+Get notified when build is starts, fails or succeeds.
 
 #### :bell: Form Notifications
-Netlify form enabled sites can inform when there are new form submissions
+Netlify form enabled sites can notify when there are new form submissions
 
 ## Development approach :wrench:
 Bot will be developed on Mattermost platform via [Mattermost Plugin](https://developers.mattermost.com/extend/plugins/). API's of Netlify will be integrated by [Netlify Go API Client](https://github.com/netlify/open-api#go-client)
