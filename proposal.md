@@ -16,6 +16,15 @@ Proposal : [Hackerearth's idea section](https://www.hackerearth.com/challenges/h
 
 Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/dashboard/2abe565/submission/)
 
+![sepia-line](https://i.imgur.com/NuYL2xl.png)
+
+## Table of Contents
+
+ - [1. Summary](#1-features)
+ - [2. Problem statement](#2-configuration)
+ - [3. Features](#3-jira-v2-roadmap)
+ - [4. Approach](#4-development)
+
 ### :book: Summary
 Mattermost Netlify bot is an intermediary agent between your netlify 
 ### :interrobang: Problem Statement
