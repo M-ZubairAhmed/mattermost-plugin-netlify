@@ -57,17 +57,17 @@ Manages Mattermost channels which are subscribed to recieve notifications from N
 Triggers build for sites.
 ![Screenshot from 2020-02-01 08-05-17](https://user-images.githubusercontent.com/17708702/73585695-8201d800-449b-11ea-9ae3-29bf275aa1c8.png)
 
-#### :pencil2: Command : `/logs`
-Gets build logs of the site.
-
 #### :pencil2: Command : `/site`
 Manage site settings such as SSL, DNS, processing settings etc.
+![Screenshot from 2020-02-01 08-25-45](https://user-images.githubusercontent.com/17708702/73585941-68ae5b00-449e-11ea-8b63-4b2c863b763a.png)
 
 #### :bell: Deploy Notifications
 Get notified when build is starts, fails or succeeds.
+![Screenshot from 2020-02-01 08-27-51](https://user-images.githubusercontent.com/17708702/73585948-a8754280-449e-11ea-8fe1-882f1f574a30.png)
 
 #### :bell: Form Notifications
 Netlify form enabled sites can notify when there are new form submissions.
+![Screenshot from 2020-02-01 08-28-23](https://user-images.githubusercontent.com/17708702/73585952-c17df380-449e-11ea-9b05-6799f53971a8.png)
 
 ## Development approach :wrench:
 Bot will be developed on Mattermost platform via [Mattermost Plugin](https://developers.mattermost.com/extend/plugins/). API's of Netlify will be integrated by [Netlify Go API Client](https://github.com/netlify/open-api#go-client)
