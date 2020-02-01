@@ -21,11 +21,11 @@ Submission : [TBA](https://www.hackerearth.com/challenges/hackathon/mattermost-b
 ![blue-line](https://i.imgur.com/cETzBqq.png)
 
 ## Summary :page_facing_up:
-Mattermost Netlify bot is an intermediary agent between your netlify and mattermost account. It makes it easy to monitor and interact with your netlify's resources all within your team's channel. Once integrated with your mattermost channel, team can start recieving various Netlify notifications such as netlify form submissions, build failures etc and can run commands to redeploy, see build stats, create hooks and much more.
+Mattermost Netlify bot is an intermediary agent between your Netlify and mattermost account. It makes it easy to monitor and interact with your Netlify's resources all within your team's channel. Once integrated with your Mattermost channel, team can start recieving various Netlify notifications such as Netlify form submissions, build failures etc and can run commands to redeploy, see build stats, create hooks and much more.
 
 ## Problem Statement :rotating_light:
 
-- Familiar interface : System admins can manage netlify configuration right from the chat window with which they are familiar with.
+- Familiar interface : System admins can manage Netlify configuration right from the chat window with which they are familiar with.
 - Critical notification to team : Concerned teams are notified of the issue which makes it easier to plan and execute the solution rapidly.
 - System health and monitoring on the fly.
 
@@ -44,7 +44,7 @@ Connects your Netlify's account into Mattermost.
 Disconnects your Netlify's account from Mattermost.
 
 #### :pencil2: Command : `/subscribe`
-Manages Mattermost channels which are subscribed to notifications from Netlify.
+Manages Mattermost channels which are subscribed to recieve notifications from Netlify.
 
 #### :pencil2: Command : `/build`
 Triggers build for sites.
@@ -62,7 +62,7 @@ Manage site settings such as SSL, DNS, processing settings etc.
 Get notified when build is starts, fails or succeeds.
 
 #### :bell: Form Notifications
-Netlify form enabled sites can notify when there are new form submissions
+Netlify form enabled sites can notify when there are new form submissions.
 
 ## Development approach :wrench:
 Bot will be developed on Mattermost platform via [Mattermost Plugin](https://developers.mattermost.com/extend/plugins/). API's of Netlify will be integrated by [Netlify Go API Client](https://github.com/netlify/open-api#go-client)
