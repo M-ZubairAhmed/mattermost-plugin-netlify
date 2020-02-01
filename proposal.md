@@ -51,9 +51,11 @@ Create and manage notifications for events such as deploy-started, deploy-failed
 
 #### :pencil2: Command : `/subscribe`
 Manages Mattermost channels which are subscribed to recieve notifications from Netlify.
+![Screenshot from 2020-02-01 08-03-59](https://user-images.githubusercontent.com/17708702/73585670-52eb6680-449b-11ea-9e91-54f78e3e1733.png)
 
 #### :pencil2: Command : `/build`
 Triggers build for sites.
+![Screenshot from 2020-02-01 08-05-17](https://user-images.githubusercontent.com/17708702/73585695-8201d800-449b-11ea-9ae3-29bf275aa1c8.png)
 
 #### :pencil2: Command : `/logs`
 Gets build logs of the site.
