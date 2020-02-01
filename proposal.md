@@ -39,9 +39,15 @@ All commands start with prefix *netlify*
 
 #### :pencil2: Command : `/connect`
 Connects your Netlify's account into Mattermost.
+![Screenshot from 2020-02-01 07-35-02](https://user-images.githubusercontent.com/17708702/73585246-4fee7700-4497-11ea-862f-4baec768d00b.png)
 
 #### :pencil2: Command : `/disconnect`
 Disconnects your Netlify's account from Mattermost.
+![Screenshot from 2020-02-01 07-42-18](https://user-images.githubusercontent.com/17708702/73585336-4c0f2480-4498-11ea-92b7-8735763f41d2.png)
+
+#### :pencil2: Command : `/notifications`
+Create and manage notifications for events such as deploy-started, deploy-failed and more for your site.
+![Screenshot from 2020-02-01 07-58-56](https://user-images.githubusercontent.com/17708702/73585601-9ee9db80-449a-11ea-95ae-19319992829c.png)
 
 #### :pencil2: Command : `/subscribe`
 Manages Mattermost channels which are subscribed to recieve notifications from Netlify.
@@ -51,9 +57,6 @@ Triggers build for sites.
 
 #### :pencil2: Command : `/logs`
 Gets build logs of the site.
-
-#### :pencil2: Command : `/notifications`
-Create and manage notifications for events such as deploy-started, deploy-failed and more for your site.
 
 #### :pencil2: Command : `/site`
 Manage site settings such as SSL, DNS, processing settings etc.
