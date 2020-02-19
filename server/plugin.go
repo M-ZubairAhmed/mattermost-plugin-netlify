@@ -47,7 +47,12 @@ func (p *Plugin) OnActivate() error {
 
 	// RegisterCommand registers a custom slash command.
 	// When the command is triggered, your plugin can fulfill it via the ExecuteCommand hook.
-	p.API.RegisterCommand(getCommand())
+	err = p.API.RegisterCommand(getCommand())
+	if err != nil {
+		return errors.Wrap(err, "Failed to register slash command")
+	}
+
+	fmt.Print("I started")
 
 	netlifyBot := &model.Bot{
 		Username:    "netlify",

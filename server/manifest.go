@@ -12,8 +12,8 @@ var manifest *model.Manifest
 
 const manifestStr = `
 {
-  "id": "com.mzubairahmed.mattermost-plugin-netlify",
-  "name": "Netlify-Plugin",
+  "id": "netlify",
+  "name": "Netlify",
   "description": "Netlify's plugin for Mattermost",
   "homepage_url": "https://github.com/m-zubairahmed/mattermost-plugin-netlify",
   "support_url": "https://github.com/m-zubairahmed/mattermost-plugin-netlify/issues",
@@ -39,7 +39,7 @@ const manifestStr = `
         "key": "NetlifyOAuthAppName",
         "display_name": "Netlify Application Name",
         "type": "text",
-        "help_text": "The name given to the your OAuth application in Netlify",
+        "help_text": "The name given to the your OAuth application in Netlify, Remember to add the Redirect URL in Netlify application as : \u003csiteURL\u003e/plugins/netlify/oauth/redirect",
         "placeholder": "Please copy the same application name in Netlify OAuth app",
         "default": "Mattermost-Netlify-Bot"
       },

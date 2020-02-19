@@ -12,11 +12,11 @@ import (
 func getCommand() *model.Command {
 	return &model.Command{
 		Trigger:          "netlify",
-		AutoComplete:     true,
-		AutoCompleteHint: "[command]",
-		AutoCompleteDesc: "Available commands: connect, disconnect",
 		DisplayName:      "Netlify",
 		Description:      "Integration with Netlify",
+		AutoComplete:     true,
+		AutoCompleteDesc: "Available commands: connect, help",
+		AutoCompleteHint: "[command]",
 	}
 }
 
@@ -35,31 +35,45 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	}
 
 	// Reject any command not prefixed netlify
-	if baseCommand != "netlify" {
+	if baseCommand != "/netlify" {
 		return &model.CommandResponse{}, nil
 	}
 
-	switch action {
-	case "connect":
-		p.wrapperSendEphemeralPost(args, "Ok connect exec")
-		return &model.CommandResponse{}, nil
-	case "help":
-		p.wrapperSendEphemeralPost(args, "help")
-		return &model.CommandResponse{}, nil
-	case "":
-		p.wrapperSendEphemeralPost(args, "help fallback")
-		return &model.CommandResponse{}, nil
-	default:
-		p.wrapperSendEphemeralPost(args, fmt.Sprintf("Unknown action %v", action))
+	// /connect slash command to connect to Netlify
+	if action == "connect" {
+		// Check if SiteURL is defined in the app
+		siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+		if siteURL == nil {
+			p.sendEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+			return &model.CommandResponse{}, nil
+		}
+
+		// Send an ephemeral post with the link to connect netlify
+		p.sendEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to link your Netlify account.](%s/plugins/netlify/oauth/connect)", *siteURL))
 		return &model.CommandResponse{}, nil
 	}
+
+	// Before executing any of below commands check if user account is connected
+	// TODO
+
+	// /help slash command to list all netlify commands
+	if action == "help" || action == "" {
+		p.sendEphemeralPostWithMessage(args, fmt.Sprintf("Help"))
+		return &model.CommandResponse{}, nil
+
+	}
+
+	// Unknown slash command if no action matches
+	p.sendEphemeralPostWithMessage(args, fmt.Sprintf("Unknown action %v, to see list of commands type `/netlify help`", action))
+	return &model.CommandResponse{}, nil
 }
 
-func (p *Plugin) wrapperSendEphemeralPost(args *model.CommandArgs, text string) {
+func (p *Plugin) sendEphemeralPostWithMessage(args *model.CommandArgs, text string) {
 	post := &model.Post{
 		UserId:    p.BotUserID,
 		ChannelId: args.ChannelId,
 		Message:   text,
 	}
-	_ = p.API.SendEphemeralPost(args.UserId, post)
+	sentPost := p.API.SendEphemeralPost(args.UserId, post)
+	fmt.Printf(sentPost.Message)
 }
