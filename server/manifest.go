@@ -12,11 +12,12 @@ var manifest *model.Manifest
 
 const manifestStr = `
 {
-  "id": "com.mattermost.plugin-starter-template",
-  "name": "Plugin Starter Template",
-  "description": "This plugin serves as a starting point for writing a Mattermost plugin.",
+  "id": "com.mzubairahmed.mattermost-plugin-netlify",
+  "name": "Netlify-Plugin",
+  "description": "Netlify's plugin for Mattermost",
+  "icon_path": "assets/icon.svg",
   "version": "0.1.0",
-  "min_server_version": "5.12.0",
+  "min_server_version": "5.14.0",
   "server": {
     "executables": {
       "linux-amd64": "server/dist/plugin-linux-amd64",

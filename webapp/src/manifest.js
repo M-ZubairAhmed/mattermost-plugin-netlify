@@ -2,9 +2,10 @@
 
 const manifest = JSON.parse(`
 {
-    "id": "com.mzubairahmed.mattermost-plugin-netlify"",
+    "id": "com.mzubairahmed.mattermost-plugin-netlify",
     "name": "Netlify-Plugin",
     "description": "Netlify's plugin for Mattermost",
+    "icon_path": "assets/icon.svg",
     "version": "0.1.0",
     "min_server_version": "5.14.0",
     "server": {
