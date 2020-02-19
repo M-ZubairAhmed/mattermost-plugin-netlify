@@ -21,6 +21,7 @@ import (
 type configuration struct {
 	NetlifyOAuthAppName  string
 	NetlifyOAuthClientID string
+	NetlifyOAuthSecret   string
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -33,11 +34,15 @@ func (c *configuration) Clone() *configuration {
 // IsValid checks if all needed fields are set.
 func (c *configuration) IsValid() error {
 	if c.NetlifyOAuthClientID == "" {
-		return fmt.Errorf("Must have a netlify oauth client id")
+		return fmt.Errorf("Must have Netlify OAuth client id entered in plugin settings")
 	}
 
 	if c.NetlifyOAuthClientID == "" {
-		return fmt.Errorf("Must have netlify oauth application name")
+		return fmt.Errorf("Must have Netlify OAuth application name entered in plugin settings")
+	}
+
+	if c.NetlifyOAuthSecret == "" {
+		return fmt.Errorf("Must have Netlify OAuth secret entered in plugin settings")
 	}
 
 	return nil
