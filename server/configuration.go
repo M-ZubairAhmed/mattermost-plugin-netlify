@@ -36,6 +36,10 @@ func (c *configuration) IsValid() error {
 		return fmt.Errorf("Must have a netlify oauth client id")
 	}
 
+	if c.NetlifyOAuthClientID == "" {
+		return fmt.Errorf("Must have netlify oauth application name")
+	}
+
 	return nil
 }
 

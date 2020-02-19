@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"sync"
 
 	"github.com/mattermost/mattermost-server/v5/model"
@@ -59,7 +61,28 @@ func (p *Plugin) OnActivate() error {
 		return errors.Wrap(err, "Failed to ensure Netlify bot")
 	}
 
+	// Store created ID in Plugin struct
 	p.BotUserID = botID
+
+	// Get the plugin file path
+	bundlePath, err := p.API.GetBundlePath()
+	if err != nil {
+		return errors.Wrap(err, "Could not get bundle path")
+	}
+
+	botProfileImageName := "profile.png"
+
+	// Retrieve Bot profile image from assets file folder
+	botProfileImage, err := ioutil.ReadFile(filepath.Join(bundlePath, "assets", botProfileImageName))
+	if err != nil {
+		return errors.Wrap(err, "Could not get the profile image")
+	}
+
+	// Set the profile image to bot via API
+	errInSetProfileImage := p.API.SetProfileImage(botID, botProfileImage)
+	if errInSetProfileImage != nil {
+		return errors.Wrap(err, "Could not set the profile image")
+	}
 
 	return nil
 }
