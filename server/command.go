@@ -49,7 +49,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		}
 
 		// Send an ephemeral post with the link to connect netlify
-		p.sendEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to link your Netlify account.](%s/plugins/netlify/oauth/connect)", *siteURL))
+		p.sendEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to link your Netlify account.](%s/plugins/netlify/auth/connect)", *siteURL))
 		return &model.CommandResponse{}, nil
 	}
 
