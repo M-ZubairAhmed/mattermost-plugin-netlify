@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"sync"
@@ -46,8 +45,6 @@ func (p *Plugin) OnActivate() error {
 		return errors.Wrap(err, "Failed to register slash command")
 	}
 
-	fmt.Print("I started")
-
 	netlifyBot := &model.Bot{
 		Username:    "netlify",
 		DisplayName: "Netlify",
@@ -82,6 +79,8 @@ func (p *Plugin) OnActivate() error {
 	if errInSetProfileImage != nil {
 		return errors.Wrap(err, "Could not set the profile image")
 	}
+
+	// TODO : Create a post in direct Bot message to how to further configure the plugin
 
 	return nil
 }

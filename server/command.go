@@ -44,12 +44,12 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		// Check if SiteURL is defined in the app
 		siteURL := p.API.GetConfig().ServiceSettings.SiteURL
 		if siteURL == nil {
-			p.sendEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+			p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
 			return &model.CommandResponse{}, nil
 		}
 
 		// Send an ephemeral post with the link to connect netlify
-		p.sendEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to link your Netlify account.](%s/plugins/netlify/auth/connect)", *siteURL))
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to link your Netlify account.](%s/plugins/netlify/auth/connect)", *siteURL))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -58,22 +58,12 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	// /help slash command to list all netlify commands
 	if action == "help" || action == "" {
-		p.sendEphemeralPostWithMessage(args, fmt.Sprintf("Help"))
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Help"))
 		return &model.CommandResponse{}, nil
 
 	}
 
 	// Unknown slash command if no action matches
-	p.sendEphemeralPostWithMessage(args, fmt.Sprintf("Unknown action %v, to see list of commands type `/netlify help`", action))
+	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Unknown action %v, to see list of commands type `/netlify help`", action))
 	return &model.CommandResponse{}, nil
-}
-
-func (p *Plugin) sendEphemeralPostWithMessage(args *model.CommandArgs, text string) {
-	post := &model.Post{
-		UserId:    p.BotUserID,
-		ChannelId: args.ChannelId,
-		Message:   text,
-	}
-	sentPost := p.API.SendEphemeralPost(args.UserId, post)
-	fmt.Printf(sentPost.Message)
 }
