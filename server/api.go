@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/mattermost/mattermost-server/v5/model"
@@ -130,18 +132,38 @@ func (p *Plugin) handleAuthRedirectFromNetlify(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// TODO : store encrypted version of Access Token
 	// Store the accesstoken into KV store with a unique identifier i.e userid_netlifyToken
-	err = p.API.KVSet(authUserID+NetlifyAuthTokenKVIdentifier, []byte(token.AccessToken))
-	if err != nil {
+	appErr = p.setNetlifyUserAccessTokenToStore(token, authUserID)
+	if appErr != nil {
 		http.Error(w, "Could not store netlify credentials", http.StatusInternalServerError)
 		return
 	}
 
 	// Send a welcome message via Bot
-	err = p.sendBotPostOnDM(authUserID, SuccessfullyNetlifyConnectedMessage)
+	p.sendBotPostOnDM(authUserID, SuccessfullyNetlifyConnectedMessage)
 
-	// Give a response to the page that auth is completed
+	// Get the plugin file path
+	bundlePath, bundleErr := p.API.GetBundlePath()
+
+	// Get the HTML of the page which should be shown once auth is completed
+	redirectedOAuthPageHTML, fileErr := ioutil.ReadFile(filepath.Join(bundlePath, "assets", "auth-redirect.html"))
+
+	// If any error then fallback to default HTML
+	if bundleErr != nil || fileErr != nil {
+		defaultRedirectedOAuthPageHTML := `
+		<!DOCTYPE html>
+		<html>
+			<head>
+			</head>
+			<body>
+				<p>You can safely close this page and head back to your Mattermost app</p>
+			</body>
+		</html>
+		`
+		redirectedOAuthPageHTML = []byte(defaultRedirectedOAuthPageHTML)
+	}
+
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(RedirectedOAuthPageHTML))
+	w.Write(redirectedOAuthPageHTML)
+
 }
