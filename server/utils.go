@@ -25,6 +25,7 @@ func (p *Plugin) setNetlifyUserAccessTokenToStore(token *oauth2.Token, userID st
 
 	// Store the accesstoken into KV store with a unique identifier i.e userid_netlifyToken
 	// TODO : store encrypted version of Access Token
+	// TODO : store complete *oauth2.Token strut
 	err := p.API.KVSet(accessTokenIdentifier, accessToken)
 	if err != nil {
 		return err
@@ -33,11 +34,22 @@ func (p *Plugin) setNetlifyUserAccessTokenToStore(token *oauth2.Token, userID st
 	return nil
 }
 
-// func (p *Plugin) getNetlifyUserAccessTokenFromStore(userID string) error {
-// 	// Unique identifier
-// 	accessTokenIdentifier := userID + NetlifyAuthTokenKVIdentifier
+func (p *Plugin) getNetlifyUserAccessTokenFromStore(userID string) (string, error) {
+	// Unique identifier
+	accessTokenIdentifier := userID + NetlifyAuthTokenKVIdentifier
 
-// }
+	// Get the token from the KV store
+	accessTokenInBytes, err := p.API.KVGet(accessTokenIdentifier)
+	if err != nil || accessTokenInBytes == nil {
+		return "", err
+	}
+
+	// TODO make use of ReuseTokenSource to automatically get new token when they expires
+	// https://pkg.go.dev/golang.org/x/oauth2?tab=doc#ReuseTokenSource
+	accessToken := string(accessTokenInBytes)
+
+	return accessToken, nil
+}
 
 func (p *Plugin) sendBotPostOnDM(userID string, message string) *model.AppError {
 	// Get the Bot Direct Message channel
