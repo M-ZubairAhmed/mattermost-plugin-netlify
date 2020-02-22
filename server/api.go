@@ -1,9 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
-	"net/url"
+	"strings"
 
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
@@ -20,17 +21,14 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 
 	// oauth/connect : When user execute /connect go to netlify auth page
 	if route == "/auth/connect" {
-		p.redirectUserToNetlifyAuthPage(w, r)
+		p.handleRedirectUserToNetlifyAuthPage(w, r)
 	}
 	if route == "/auth/redirect" {
-		fmt.Fprint(w, "Successfully Authenticated!, you may close this tab and return to your Mattermost application. Thank you for using Netlify plugin.")
+		p.handleAuthRedirectFromNetlify(w, r)
 	}
 }
 
 func (p *Plugin) getOAuthConfig() *oauth2.Config {
-	// Parse the Netlify Auth URL https://docs.netlify.com/api/get-started/#authentication
-	authURL, _ := url.Parse("https://app.netlify.com/authorize")
-
 	config := p.getConfiguration()
 
 	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
@@ -48,7 +46,9 @@ func (p *Plugin) getOAuthConfig() *oauth2.Config {
 		// often available via site-specific packages, such as
 		// google.Endpoint or github.Endpoint.
 		Endpoint: oauth2.Endpoint{
-			AuthURL: authURL.String(),
+			// Netlify Auth URL https://docs.netlify.com/api/get-started/#authentication
+			AuthURL:  NetlifyAuthURL,
+			TokenURL: NetlifyTokenURL,
 		},
 
 		// RedirectURL is the URL to redirect users going through
@@ -59,11 +59,12 @@ func (p *Plugin) getOAuthConfig() *oauth2.Config {
 	return oauthConfig
 }
 
-func (p *Plugin) redirectUserToNetlifyAuthPage(w http.ResponseWriter, r *http.Request) {
+func (p *Plugin) handleRedirectUserToNetlifyAuthPage(w http.ResponseWriter, r *http.Request) {
 	// Check if this url was reached from within Mattermost app
 	userID := r.Header.Get("Mattermost-User-ID")
 	if userID == "" {
 		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
 	}
 
 	// Create a unique ID generated to protect against CSRF attach while auth.
@@ -73,9 +74,74 @@ func (p *Plugin) redirectUserToNetlifyAuthPage(w http.ResponseWriter, r *http.Re
 	p.API.KVSet(antiCSRFToken, []byte(antiCSRFToken))
 
 	// Get OAuth configuration
-	conf := p.getOAuthConfig()
+	oAuthconfig := p.getOAuthConfig()
 
-	netlifyAuthURL := conf.AuthCodeURL(antiCSRFToken)
+	// Redirect user to Netlify auth URL for authentication
+	http.Redirect(w, r, oAuthconfig.AuthCodeURL(antiCSRFToken), http.StatusFound)
+}
 
-	http.Redirect(w, r, netlifyAuthURL, http.StatusFound)
+func (p *Plugin) handleAuthRedirectFromNetlify(w http.ResponseWriter, r *http.Request) {
+	// Check if we were redirected from MM pages
+	authUserID := r.Header.Get("Mattermost-User-ID")
+	if authUserID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the state "antiCSRFToken" we passes in earlier when redirecting to Netlify auth URL from redirect URL
+	antiCSRFTokenInURL := r.URL.Query().Get("state")
+
+	// Check if antiCSRFToken is the same in redirect URL as to which we passed in earlier
+	antiCSRFTokenPassedEarlier, err := p.API.KVGet(antiCSRFTokenInURL)
+	if err != nil {
+		http.Error(w, "AntiCSRF state not found", http.StatusBadRequest)
+		return
+	}
+
+	if string(antiCSRFTokenPassedEarlier) != antiCSRFTokenInURL || len(antiCSRFTokenInURL) == 0 {
+		http.Error(w, "Cross-site request forgery", http.StatusForbidden)
+		return
+	}
+
+	// Extract user id from the state
+	userID := strings.Split(antiCSRFTokenInURL, "_")[1]
+
+	// and then clear the KVStore off the CSRF token
+	p.API.KVDelete(antiCSRFTokenInURL)
+
+	// Check if the same user in App authenticated with Netlify
+	if userID != authUserID {
+		http.Error(w, "Incorrect user while authentication", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract the access code from the redirected url
+	accessCode := r.URL.Query().Get("code")
+
+	// Create a context
+	ctx := context.Background()
+
+	oauthConf := p.getOAuthConfig()
+
+	// Exchange the access code for access token from netlify token url
+	token, appErr := oauthConf.Exchange(ctx, accessCode)
+	if appErr != nil {
+		http.Error(w, appErr.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// TODO : store encrypted version of Access Token
+	// Store the accesstoken into KV store with a unique identifier i.e userid_netlifyToken
+	err = p.API.KVSet(authUserID+NetlifyAuthTokenKVIdentifier, []byte(token.AccessToken))
+	if err != nil {
+		http.Error(w, "Could not store netlify credentials", http.StatusInternalServerError)
+		return
+	}
+
+	// Send a welcome message via Bot
+	err = p.sendBotPostOnDM(authUserID, SuccessfullyNetlifyConnectedMessage)
+
+	// Give a response to the page that auth is completed
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(RedirectedOAuthPageHTML))
 }
