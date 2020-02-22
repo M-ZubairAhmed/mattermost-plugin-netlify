@@ -30,26 +30,31 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		return &model.CommandResponse{}, nil
 	}
 
-	// "/netlify connect" : slash command to connect to Netlify
+	// "/netlify connect"
 	if action == "connect" {
 		return p.handleConnectCommand(c, args)
+	}
+
+	// "/netlify help" or "/netlify"
+	if action == "help" || action == "" {
+		return p.handleHelpCommand(c, args)
 	}
 
 	// Before executing any of below commands check if user account is connected
 	accessToken, err := p.getNetlifyUserAccessTokenFromStore(args.UserId)
 	if err != nil || len(accessToken) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You must your Netlify account first. Please run `/netlify connect`"))
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You must connect your Netlify account first.\nPlease run `/netlify connect`"))
 		return &model.CommandResponse{}, nil
 	}
 
-	// "/netlify help" or "/netlify" : slash command to list all netlify commands
-	if action == "help" || action == "" {
-		return p.handleHelpCommand(c, args)
-
+	// "/netlify disconnect"
+	if action == "disconnect" {
+		return p.handleDisconnectCommand(c, args)
 	}
 
-	// "/netlify xxxxx" : Unknown slash command if no action matches
+	// "/netlify xyz"
 	return p.handleUnknownCommand(c, args, action)
+
 }
 
 func (p *Plugin) transformCommandToAction(command string) (string, string) {
@@ -88,5 +93,24 @@ func (p *Plugin) handleHelpCommand(c *plugin.Context, args *model.CommandArgs) (
 
 func (p *Plugin) handleUnknownCommand(c *plugin.Context, args *model.CommandArgs, action string) (*model.CommandResponse, *model.AppError) {
 	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Unknown command `/netlify %v`\nTo see list of commands type `/netlify help`", action))
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	userID := args.UserId
+
+	// Unique identifier
+	accessTokenIdentifier := userID + NetlifyAuthTokenKVIdentifier
+
+	// Delete the access token from KV store
+	err := p.API.KVDelete(accessTokenIdentifier)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Couldnt disconnect to Netlify services : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+
+	}
+
+	// Send success disconnect message
+	p.sendBotEphemeralPostWithMessage(args, fmt.Sprint("Mattermost Netlify plugin is now disconnected"))
 	return &model.CommandResponse{}, nil
 }
