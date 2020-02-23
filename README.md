@@ -8,4 +8,4 @@ Note : *Currently unstable due to active development, to be used for testing pur
 
 
 ## Getting started
-Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section.
+Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section. For more help on how to install a custom plugin refers [set up plugin docs](https://docs.mattermost.com/administration/plugins.html#custom-plugins).
