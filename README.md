@@ -12,6 +12,9 @@
 - [Running](#running-up)
 - [Features](#features)
   * [Slash commands](#slash-commands)
+      + [Connect](#connect-command)
+      + [Disconnect](#disconnect-command)
+      + [Help](#help-command)
 - [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
 
@@ -62,4 +65,10 @@ Please download the latest version of the [release](https://github.com/M-ZubairA
 ## Features
 
 ### Slash commands
+
+### Connect command
+
+### Disconnect command
+
+### Help command
 
