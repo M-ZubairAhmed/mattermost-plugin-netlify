@@ -10,7 +10,7 @@
   * [Setup at Netlify](#setting-up-at-netlify)
   * [Configure settings](#setting-up-at-mattermost)
 - [Running](#running-up)
-- [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/custom-tab/submission-guideline/#Submission%20Guideline)
+- [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
 
 ## Installation
