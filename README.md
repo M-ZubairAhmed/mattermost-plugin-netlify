@@ -65,10 +65,20 @@ Please download the latest version of the [release](https://github.com/M-ZubairA
 ## Features
 
 ### Slash commands
+With the series of slash commands at its disposal, Netlify plugin can be used to manage or change resources up at Netlify account.
 
 ### Connect command
+`/netlify connect`
+
+By executing this command, the bot will post a link into the channel. Folllowing which authentication with Netlify can be performed. Any of the belows commands requests that connection being made first before execution. After successfull authentication access token is stored in encrypted form at mattermost database. Which is then used to perform various operations via netlify api.
 
 ### Disconnect command
+`/netlify disconnect`
+
+This commands clears out authentication between netlify and mattermost. All the notifications are also unsubscribbed from Mattermost.
 
 ### Help command
+`/netlify help`
+
+It shows all the commands which are available for user to interact with Netlify bot.
 
