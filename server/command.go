@@ -16,7 +16,7 @@ func getCommand() *model.Command {
 		DisplayName:      "Netlify",
 		Description:      "Integration with Netlify",
 		AutoComplete:     true,
-		AutoCompleteDesc: "Available commands: connect, disconnect, list, help",
+		AutoCompleteDesc: "Available commands: connect, disconnect, list, list detail, help",
 		AutoCompleteHint: "[command]",
 	}
 }
@@ -24,7 +24,7 @@ func getCommand() *model.Command {
 // ExecuteCommand executes the commands registered on getCommand() via RegisterCommand hook
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	// Obtain basecommand and its associated action
-	baseCommand, action := p.transformCommandToAction(args.Command)
+	baseCommand, action, parameters := p.transformCommandToAction(args.Command)
 
 	// Reject any command not prefixed `netlify`
 	if baseCommand != "/netlify" {
@@ -55,7 +55,13 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	// "/netlify list"
 	if action == "list" {
-		return p.handleListCommand(c, args)
+		if len(parameters) == 0 {
+			return p.handleListCommand(args, false)
+		} else if len(parameters) == 1 && parameters[0] == "detail" {
+			return p.handleListCommand(args, true)
+		} else {
+			return p.handleUnknownCommand(c, args, action+" "+strings.Join(parameters, ""))
+		}
 	}
 
 	// "/netlify xyz"
@@ -63,19 +69,26 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 }
 
-func (p *Plugin) transformCommandToAction(command string) (string, string) {
+func (p *Plugin) transformCommandToAction(command string) (string, string, []string) {
 	// Split the entered command based on white space
 	arguments := strings.Fields(command)
 
 	// Eg. "netlify" in command "/netlify"
 	baseCommand := arguments[0]
 
-	// Eg "connect" in command "/netlify connect"
+	// Eg "connect" in command "/netlify list"
 	action := ""
 	if len(arguments) > 1 {
 		action = arguments[1]
 	}
-	return baseCommand, action
+
+	// Eg "detail" in command "/netlify list detail"
+	parameters := []string{}
+	if len(arguments) > 2 {
+		parameters = arguments[2:]
+	}
+
+	return baseCommand, action, parameters
 }
 
 func (p *Plugin) handleConnectCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
@@ -120,7 +133,7 @@ func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandA
 	return &model.CommandResponse{}, nil
 }
 
-func (p *Plugin) handleListCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+func (p *Plugin) handleListCommand(args *model.CommandArgs, listInDetail bool) (*model.CommandResponse, *model.AppError) {
 	userID := args.UserId
 
 	// Get the Netlify library client for interacting with netlify api
@@ -155,13 +168,21 @@ func (p *Plugin) handleListCommand(c *plugin.Context, args *model.CommandArgs) (
 	}
 
 	// Create a table with just the header, rows will fill up in the loop
-	var markdownTable string = fmt.Sprintf("%v", MarkdownSiteListTableHeader)
+	var markdownTable string = MarkdownSiteListTableHeader
+	if listInDetail == true {
+		markdownTable = MarkdownSiteListDetailTableHeader
+	}
 
 	// Loop over all sites and make a row to add to table
 	for _, site := range sites {
 		name := "-"
 		if len(site.Name) != 0 {
 			name = site.Name
+		}
+
+		id := "-"
+		if len(site.ID) != 0 {
+			id = site.ID
 		}
 
 		url := "-"
@@ -198,6 +219,9 @@ func (p *Plugin) handleListCommand(c *plugin.Context, args *model.CommandArgs) (
 		}
 
 		var tableRow string = fmt.Sprintf("| %v | %v | %v | %v | %v | %v | %v |", name, url, customDomain, repo, branch, team, lastUpdatedAt)
+		if listInDetail == true {
+			tableRow = fmt.Sprintf("| %v | %v |", name, id)
+		}
 
 		markdownTable = fmt.Sprintf("%v\n%v", markdownTable, tableRow)
 	}

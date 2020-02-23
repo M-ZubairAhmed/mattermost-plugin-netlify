@@ -37,3 +37,8 @@ const SuccessfullyNetlifyConnectedMessage string = "#### Welcome to the Mattermo
 const MarkdownSiteListTableHeader string = `
 | Name   | URL           | Custom domain | Repository | Branch | Managed by | Last updated |
 |--------|:-------------:|:-------------:|------------|--------|------------|-------------:|`
+
+// MarkdownSiteListDetailTableHeader is a table rendered in markdown for list detail command
+const MarkdownSiteListDetailTableHeader string = `
+| Name | ID |
+|------|:--:|`
