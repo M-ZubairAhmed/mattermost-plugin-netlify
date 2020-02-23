@@ -42,3 +42,14 @@ Please download the latest version of the [release](https://github.com/M-ZubairA
 1. Hit *Save* button in the footer to save your settings.
 1. Restart the plugin to propogate the effect. ![Screenshot_2020-02-23 System Console - Mattermostsas](https://user-images.githubusercontent.com/17708702/75110455-3d92d380-5626-11ea-9b63-37726d41ddae.png)
 
+## Running up
+1. This plugin works with the helps of simple commands and interactive dialoges. But first to be able to access any of the plugins commands, Netlify and Mattermost needs to be connected. Go to any channel and write the first slash command of netlify plugin `/netlify connect`. Netlify bot then posts a link through which you can authenticate your netlify account. ![Screenshot_2020-02-23 Any Channel - AQQQ Mattermost](https://user-images.githubusercontent.com/17708702/75111311-615b1700-5630-11ea-8489-7e3eadc3d844.png)
+
+1. Follow the link and you will be taken to Netlify login site. After logging in you will be presented with a permission screen. Hit approve button. ![Screenshot_2020-02-23 Authorize Application Netlify](https://user-images.githubusercontent.com/17708702/75111404-4f2da880-5631-11ea-89e8-8f5d7db4efaf.png)
+
+1. If successful, You will be redirected to successfully authenticated page. This page can be safely closed then.  ![Screenshot_2020-02-23 Screenshot](https://user-images.githubusercontent.com/17708702/75111435-b77c8a00-5631-11ea-871a-ddb7aeabaab0.png)
+
+1. A new message from *netlify* Bot is also posted on the DM stating the same. With this Netlify Mattermost plugin is configured and ready to use. ![Screenshot_2020-02-23 netlify - AQQQ Mattermost](https://user-images.githubusercontent.com/17708702/75111440-c4997900-5631-11ea-9e18-f31c5f1502d2.png)
+
+
+
