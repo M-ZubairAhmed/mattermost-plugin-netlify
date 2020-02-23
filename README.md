@@ -18,6 +18,8 @@
       + [List](#list-command)
 - [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
+   * [Repository submission](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/blob/master/hackathon-submissions/m-zubairahmed-mattermost-plugin-netlify.md)
+   * [Pull request link](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/pull/3)
 
 ## Installation
 Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section. For more help on how to install a custom plugin refers [installing custom plugin docs](https://docs.mattermost.com/administration/plugins.html#custom-plugins).
