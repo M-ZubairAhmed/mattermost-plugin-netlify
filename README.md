@@ -6,10 +6,16 @@
 
 Note : *Currently unstable due to active development, should be used for testing purpose only*.
 
-> Started as a part of [Mattermost Bot Hackathon Jan/Feb '20](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/custom-tab/submission-guideline/#Submission%20Guideline), Ideation draft is available [here](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md).
+## Table of content
+- [Installation](#heading)
+- [Setting up](#heading-1)
+  * [Setup at Netlify](#sub-heading-1)
+  * [Configure settings](#sub-heading-1)
+- [Running](#heading-2)
+- [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/custom-tab/submission-guideline/#Submission%20Guideline)
+   * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
 
-
-## Installing plugin
+## Installation
 Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section. For more help on how to install a custom plugin refers [installing custom plugin docs](https://docs.mattermost.com/administration/plugins.html#custom-plugins).
 
 ## Setting up
