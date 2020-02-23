@@ -4,8 +4,6 @@
   <h5 align="center"><i>A two way integration plugin between Mattermost and Netlify.</i></h5>
 </p>
 
-![blue-line](https://user-images.githubusercontent.com/17708702/75109655-3b784700-561d-11ea-8fef-da11ec7dbc2e.png)
-
 Note : *Currently unstable due to active development, to be used for testing purpose only*.
 
 > Started as a part of [Mattermost Bot Hackathon Jan/Feb '20](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/custom-tab/submission-guideline/#Submission%20Guideline), Ideation draft is available [here](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md).
