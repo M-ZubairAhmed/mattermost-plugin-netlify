@@ -16,14 +16,14 @@ func getCommand() *model.Command {
 		DisplayName:      "Netlify",
 		Description:      "Integration with Netlify",
 		AutoComplete:     true,
-		AutoCompleteDesc: "Available commands: connect, disconnect, list, list detail, help",
+		AutoCompleteDesc: "Available commands: connect, disconnect, list, list detail, me, help",
 		AutoCompleteHint: "[command]",
 	}
 }
 
 // ExecuteCommand executes the commands registered on getCommand() via RegisterCommand hook
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-	// Obtain basecommand and its associated action
+	// Obtain basecommand and its associated action and parameters
 	baseCommand, action, parameters := p.transformCommandToAction(args.Command)
 
 	// Reject any command not prefixed `netlify`
@@ -60,8 +60,13 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		} else if len(parameters) == 1 && parameters[0] == "detail" {
 			return p.handleListCommand(args, true)
 		} else {
-			return p.handleUnknownCommand(c, args, action+" "+strings.Join(parameters, ""))
+			return p.handleUnknownCommand(c, args, action+" "+strings.Join(parameters, " "))
 		}
+	}
+
+	// "/netlify me"
+	if action == "me" {
+		return p.handleMeCommand(args)
 	}
 
 	// "/netlify xyz"
@@ -227,6 +232,63 @@ func (p *Plugin) handleListCommand(args *model.CommandArgs, listInDetail bool) (
 	}
 
 	p.sendBotPostOnChannel(args, markdownTable)
+
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleMeCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	userID := args.UserId
+
+	// Get the Netlify library client for interacting with netlify api
+	netlifyClient, _ := p.getNetlifyClient()
+
+	// Get Netlify credentials
+	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Authentication failed : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Execute netlify api to get account details
+	currentUserResponse, err := netlifyClient.Operations.GetAccount(nil, netlifyCredentials)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to get current user: %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Get the user account details payload from response
+	currentUser := currentUserResponse.GetPayload()[0]
+
+	// Parse the strings into dates
+	userCreatedDate := "not available"
+	userCreatedDateParsed, err := time.Parse(NetlifyDateLayout, currentUser.CreatedAt)
+	if err == nil {
+		userCreatedDate = userCreatedDateParsed.Format(time.RFC822)
+	}
+
+	userUpdatedDate := "not available"
+	userUpdatedDateParsed, err := time.Parse(NetlifyDateLayout, currentUser.UpdatedAt)
+	if err == nil {
+		userUpdatedDate = userUpdatedDateParsed.Format(time.RFC822)
+	}
+
+	// Construct the message with account details
+	currentUserMessage := fmt.Sprintf("Details of Netlify account attached with Mattermost:\n"+
+		"***\n"+
+		"### Primary details\n"+
+		"*Name* : **%v**\n"+
+		"*Email* : **%v**\n"+
+		"*Account Type* : **%v** - **%v**\n\n"+
+		"### Misc details\n"+
+		"*ID* : %v\n"+
+		"*Roles allowed* : %v\n"+
+		"*Created at* : %v\n"+
+		"*Last updated* : %v\n"+
+		"***",
+		currentUser.Name, currentUser.BillingEmail, currentUser.Type, currentUser.TypeName,
+		currentUser.ID, strings.Join(currentUser.RolesAllowed, " "), userCreatedDate, userUpdatedDate)
+
+	p.sendBotPostOnChannel(args, currentUserMessage)
 
 	return &model.CommandResponse{}, nil
 }
