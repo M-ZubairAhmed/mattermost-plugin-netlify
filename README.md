@@ -7,11 +7,11 @@
 Note : *Currently unstable due to active development, should be used for testing purpose only*.
 
 ## Table of content
-- [Installation](#heading)
-- [Setting up](#heading-1)
-  * [Setup at Netlify](#sub-heading-1)
-  * [Configure settings](#sub-heading-1)
-- [Running](#heading-2)
+- [Installation](#installation)
+- [Setting up](#setting-up)
+  * [Setup at Netlify](#setting-up-at-netlify)
+  * [Configure settings](#setting-up-at-mattermost)
+- [Running](#running-up)
 - [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest/custom-tab/submission-guideline/#Submission%20Guideline)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
 
