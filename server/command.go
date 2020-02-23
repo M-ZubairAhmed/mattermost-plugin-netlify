@@ -123,18 +123,30 @@ func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandA
 func (p *Plugin) handleListCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	userID := args.UserId
 
-	// Get the context
-	ctx, err := p.getContext(userID)
+	// Get the Netlify library client for interacting with netlify api
+	netlifyClient, _ := p.getNetlifyClient()
+
+	// Get Netlify credentials
+	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Authentication failed : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
 	if err != nil {
 		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Could not list Netlify sites : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
-	// Get the Netlify library client for interacting with netlify api
-	netlifyClient := p.getNetlifyClient(ctx)
-
 	// Execute list site func from netlify library
-	sites, err := netlifyClient.ListSites(ctx, nil)
+	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Get all sites from the response payload
+	sites := listSitesResponse.GetPayload()
 
 	// If user has no netlify sites
 	if len(sites) == 0 {

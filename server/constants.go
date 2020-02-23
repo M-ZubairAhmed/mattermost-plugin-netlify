@@ -2,8 +2,11 @@ package main
 
 type ctxKey int
 
-// NetlifyAPILibraryClientKey uniquely identifies context of netlify library client
-const NetlifyAPILibraryClientKey ctxKey = 1 + iota
+// NetlifyAPIPorcelainLibraryClientKey uniquely identifies context of netlify porcelain library client
+const NetlifyAPIPorcelainLibraryClientKey ctxKey = 1 + iota
+
+// NetlifyAPIPlumbingLibraryClientKey uniquely identifies context of netlify plumbing library client
+const NetlifyAPIPlumbingLibraryClientKey ctxKey = 2 + iota
 
 // NetlifyAuthTokenKVIdentifier is used to in suffix with userID to identify key in KV store
 const NetlifyAuthTokenKVIdentifier string = "_netlifyToken"

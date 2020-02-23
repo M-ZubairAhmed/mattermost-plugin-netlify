@@ -9,12 +9,8 @@ import (
 	"github.com/go-openapi/runtime"
 	openapiClient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
-
 	"github.com/mattermost/mattermost-server/v5/model"
-
-	"github.com/netlify/open-api/go/porcelain"
-	netlifyContext "github.com/netlify/open-api/go/porcelain/context"
-
+	"github.com/netlify/open-api/go/plumbing"
 	"golang.org/x/oauth2"
 )
 
@@ -104,15 +100,12 @@ func (p *Plugin) sendBotPostOnDM(userID string, message string) *model.AppError 
 	return nil
 }
 
-func (p *Plugin) getContext(userID string) (context.Context, error) {
-	ctx := context.Background()
-
+func (p *Plugin) getNetlifyClientCredentials(userID string) (runtime.ClientAuthInfoWriterFunc, error) {
 	// Get access token from KV store
 	accessToken, err := p.getNetlifyUserAccessTokenFromStore(userID)
 	if err != nil || len(accessToken) == 0 {
 		return nil, err
 	}
-
 	// Add OpenAPI runtime credentials
 	openAPICredentials := runtime.ClientAuthInfoWriterFunc(
 		func(r runtime.ClientRequest, _ strfmt.Registry) error {
@@ -121,9 +114,10 @@ func (p *Plugin) getContext(userID string) (context.Context, error) {
 			return nil
 		})
 
-	// Attach runtime credentials to context
-	ctx = netlifyContext.WithAuthInfo(ctx, openAPICredentials)
+	return openAPICredentials, nil
+}
 
+func (p *Plugin) getNetlifyClient() (*plumbing.Netlify, context.Context) {
 	// Create an HTTP client
 	httpClient := &http.Client{
 		Transport: &http.Transport{
@@ -141,16 +135,17 @@ func (p *Plugin) getContext(userID string) (context.Context, error) {
 			DisableKeepAlives:     true}}
 
 	// Create OpenAPI transport
-	transport := openapiClient.NewWithClient(NetlifyAPIHost, NetlifyAPIPath, []string{"https"}, httpClient)
+	transport := openapiClient.NewWithClient(NetlifyAPIHost, NetlifyAPIPath, plumbing.DefaultSchemes, httpClient)
 	transport.SetDebug(true)
 
 	// Create Netlify client add it to context
-	client := porcelain.NewRetryable(transport, strfmt.Default, porcelain.DefaultRetryAttempts)
-	ctx = context.WithValue(ctx, NetlifyAPILibraryClientKey, client)
+	client := plumbing.New(transport, strfmt.Default)
 
-	return ctx, nil
-}
+	// Create an empty context
+	ctx := context.Background()
 
-func (p *Plugin) getNetlifyClient(ctx context.Context) *porcelain.Netlify {
-	return ctx.Value(NetlifyAPILibraryClientKey).(*porcelain.Netlify)
+	// Add client to that context
+	ctx = context.WithValue(ctx, NetlifyAPIPorcelainLibraryClientKey, client)
+
+	return client, ctx
 }
