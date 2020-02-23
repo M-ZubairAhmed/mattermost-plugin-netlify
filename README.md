@@ -10,6 +10,8 @@
   * [Setup at Netlify](#setting-up-at-netlify)
   * [Configure settings](#setting-up-at-mattermost)
 - [Running](#running-up)
+- [Features](#features)
+  * [Slash commands](#slash-commands)
 - [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
 
@@ -57,5 +59,7 @@ Please download the latest version of the [release](https://github.com/M-ZubairA
 
 1. A new message from *netlify* Bot is also posted on the DM stating the same. With this Netlify Mattermost plugin is configured and ready to use. ![Screenshot_2020-02-23 netlify - AQQQ Mattermost](https://user-images.githubusercontent.com/17708702/75111440-c4997900-5631-11ea-9e18-f31c5f1502d2.png)
 
+## Features
 
+### Slash commands
 
