@@ -1,6 +1,10 @@
-# Mattermost Netlify Plugin
+<p align="center">
+        <img src="https://user-images.githubusercontent.com/17708702/75109618-f18f6100-561c-11ea-8c78-335b843f9388.png" alt="repo image" width="400" height="80" />
+   <h1 align="center">Mattermost Plugin Netlify</h1>
+  <h5 align="center"><i>A two way integration plugin between Mattermost and Netlify.</i></h5>
+</p>
 
-This plugin supports a two way integration with Mattermost and Netlify.
+![blue-line](https://user-images.githubusercontent.com/17708702/75109655-3b784700-561d-11ea-8fef-da11ec7dbc2e.png)
 
 Note : *Currently unstable due to active development, to be used for testing purpose only*.
 
