@@ -4,8 +4,6 @@
   <h5 align="center"><i>A two way integration plugin between Mattermost and Netlify.</i></h5>
 </p>
 
-Note : *Currently unstable due to active development, should be used for testing purpose only*.
-
 ## Table of content
 - [Installation](#installation)
 - [Setting up](#setting-up)
@@ -17,6 +15,8 @@ Note : *Currently unstable due to active development, should be used for testing
 
 ## Installation
 Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section. For more help on how to install a custom plugin refers [installing custom plugin docs](https://docs.mattermost.com/administration/plugins.html#custom-plugins).
+
+*Currently unstable due to active development, should be used for testing purpose only*.
 
 ## Setting up
 
