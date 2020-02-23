@@ -165,5 +165,4 @@ func (p *Plugin) handleAuthRedirectFromNetlify(w http.ResponseWriter, r *http.Re
 
 	w.Header().Set("Content-Type", "text/html")
 	w.Write(redirectedOAuthPageHTML)
-
 }

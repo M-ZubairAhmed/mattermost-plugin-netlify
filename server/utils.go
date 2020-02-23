@@ -1,19 +1,22 @@
 package main
 
 import (
+	"context"
+	"net"
+	"net/http"
+	"time"
+
+	"github.com/go-openapi/runtime"
+	openapiClient "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
+
 	"github.com/mattermost/mattermost-server/v5/model"
+
+	"github.com/netlify/open-api/go/porcelain"
+	netlifyContext "github.com/netlify/open-api/go/porcelain/context"
+
 	"golang.org/x/oauth2"
 )
-
-// sendBotEphemeralPostWithMessage : Sends an ephemeral bot post to the channel from which slash command was executed
-func (p *Plugin) sendBotEphemeralPostWithMessage(args *model.CommandArgs, text string) {
-	post := &model.Post{
-		UserId:    p.BotUserID,
-		ChannelId: args.ChannelId,
-		Message:   text,
-	}
-	p.API.SendEphemeralPost(args.UserId, post)
-}
 
 // setNetlifyUserAccessTokenToStore : Stores the access token along with userID inside of KV store
 func (p *Plugin) setNetlifyUserAccessTokenToStore(token *oauth2.Token, userID string) error {
@@ -51,6 +54,33 @@ func (p *Plugin) getNetlifyUserAccessTokenFromStore(userID string) (string, erro
 	return accessToken, nil
 }
 
+// sendBotEphemeralPostWithMessage : Sends an ephemeral bot post to the channel from which slash command was executed
+func (p *Plugin) sendBotEphemeralPostWithMessage(args *model.CommandArgs, text string) {
+	post := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Message:   text,
+	}
+	p.API.SendEphemeralPost(args.UserId, post)
+}
+
+func (p *Plugin) sendBotPostOnChannel(args *model.CommandArgs, text string) *model.AppError {
+	// Construct the Post message
+	post := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Message:   text,
+	}
+
+	// Send the Post
+	_, err := p.API.CreatePost(post)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Plugin) sendBotPostOnDM(userID string, message string) *model.AppError {
 	// Get the Bot Direct Message channel
 	directChannel, err := p.API.GetDirectChannel(userID, p.BotUserID)
@@ -72,4 +102,55 @@ func (p *Plugin) sendBotPostOnDM(userID string, message string) *model.AppError 
 	}
 
 	return nil
+}
+
+func (p *Plugin) getContext(userID string) (context.Context, error) {
+	ctx := context.Background()
+
+	// Get access token from KV store
+	accessToken, err := p.getNetlifyUserAccessTokenFromStore(userID)
+	if err != nil || len(accessToken) == 0 {
+		return nil, err
+	}
+
+	// Add OpenAPI runtime credentials
+	openAPICredentials := runtime.ClientAuthInfoWriterFunc(
+		func(r runtime.ClientRequest, _ strfmt.Registry) error {
+			r.SetHeaderParam("User-Agent", "test")
+			r.SetHeaderParam("Authorization", "Bearer "+accessToken)
+			return nil
+		})
+
+	// Attach runtime credentials to context
+	ctx = netlifyContext.WithAuthInfo(ctx, openAPICredentials)
+
+	// Create an HTTP client
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			MaxIdleConnsPerHost:   -1,
+			DisableKeepAlives:     true}}
+
+	// Create OpenAPI transport
+	transport := openapiClient.NewWithClient(NetlifyAPIHost, NetlifyAPIPath, []string{"https"}, httpClient)
+	transport.SetDebug(true)
+
+	// Create Netlify client add it to context
+	client := porcelain.NewRetryable(transport, strfmt.Default, porcelain.DefaultRetryAttempts)
+	ctx = context.WithValue(ctx, NetlifyAPILibraryClientKey, client)
+
+	return ctx, nil
+}
+
+func (p *Plugin) getNetlifyClient(ctx context.Context) *porcelain.Netlify {
+	return ctx.Value(NetlifyAPILibraryClientKey).(*porcelain.Netlify)
 }

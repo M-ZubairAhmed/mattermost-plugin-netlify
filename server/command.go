@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
@@ -15,7 +16,7 @@ func getCommand() *model.Command {
 		DisplayName:      "Netlify",
 		Description:      "Integration with Netlify",
 		AutoComplete:     true,
-		AutoCompleteDesc: "Available commands: connect, help",
+		AutoCompleteDesc: "Available commands: connect, disconnect, list, help",
 		AutoCompleteHint: "[command]",
 	}
 }
@@ -50,6 +51,11 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	// "/netlify disconnect"
 	if action == "disconnect" {
 		return p.handleDisconnectCommand(c, args)
+	}
+
+	// "/netlify list"
+	if action == "list" {
+		return p.handleListCommand(c, args)
 	}
 
 	// "/netlify xyz"
@@ -107,10 +113,84 @@ func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandA
 	if err != nil {
 		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Couldnt disconnect to Netlify services : %v", err.Error()))
 		return &model.CommandResponse{}, nil
-
 	}
 
 	// Send success disconnect message
 	p.sendBotEphemeralPostWithMessage(args, fmt.Sprint("Mattermost Netlify plugin is now disconnected"))
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleListCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	userID := args.UserId
+
+	// Get the context
+	ctx, err := p.getContext(userID)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Could not list Netlify sites : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Get the Netlify library client for interacting with netlify api
+	netlifyClient := p.getNetlifyClient(ctx)
+
+	// Execute list site func from netlify library
+	sites, err := netlifyClient.ListSites(ctx, nil)
+
+	// If user has no netlify sites
+	if len(sites) == 0 {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Create a table with just the header, rows will fill up in the loop
+	var markdownTable string = fmt.Sprintf("%v", MarkdownSiteListTableHeader)
+
+	// Loop over all sites and make a row to add to table
+	for _, site := range sites {
+		name := "-"
+		if len(site.Name) != 0 {
+			name = site.Name
+		}
+
+		url := "-"
+		if len(site.URL) != 0 {
+			url = site.URL
+		}
+
+		customDomain := "*none*"
+		if len(site.CustomDomain) != 0 {
+			customDomain = site.CustomDomain
+		}
+
+		repo := "-"
+		if len(site.BuildSettings.RepoURL) != 0 {
+			repo = site.BuildSettings.RepoURL
+		}
+
+		branch := "-"
+		if len(site.BuildSettings.RepoBranch) != 0 {
+			branch = site.BuildSettings.RepoBranch
+		}
+
+		team := "-"
+		if len(site.AccountName) != 0 {
+			team = site.AccountName
+		}
+
+		lastUpdatedAt := "*failed to obtain*"
+		if len(site.UpdatedAt) != 0 {
+			lastUpdatedAtParsed, err := time.Parse(NetlifyDateLayout, site.UpdatedAt)
+			if err == nil {
+				lastUpdatedAt = lastUpdatedAtParsed.Format(time.RFC822)
+			}
+		}
+
+		var tableRow string = fmt.Sprintf("| %v | %v | %v | %v | %v | %v | %v |", name, url, customDomain, repo, branch, team, lastUpdatedAt)
+
+		markdownTable = fmt.Sprintf("%v\n%v", markdownTable, tableRow)
+	}
+
+	p.sendBotPostOnChannel(args, markdownTable)
+
 	return &model.CommandResponse{}, nil
 }
