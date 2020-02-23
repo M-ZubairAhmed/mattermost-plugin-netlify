@@ -70,12 +70,14 @@ With the series of slash commands at its disposal, Netlify plugin can be used to
 ### Connect command
 `/netlify connect`
 
-By executing this command, the bot will post a link into the channel. Folllowing which authentication with Netlify can be performed. Any of the belows commands requests that connection being made first before execution. After successfull authentication access token is stored in encrypted form at mattermost database. Which is then used to perform various operations via netlify api.
+By executing this command, the bot will post a link into the channel. Folllowing which authentication with Netlify can be performed. Any of the belows commands requests that connection being made first before execution. After successfull authentication access token is stored in encrypted form at mattermost database. Which is then used to perform various operations via netlify api. ![Peek 2020-02-23 17-42](https://user-images.githubusercontent.com/17708702/75111826-f57bad00-5635-11ea-9a9d-a45037d200a4.gif)
 
 ### Disconnect command
 `/netlify disconnect`
 
 This commands clears out authentication between netlify and mattermost. All the notifications are also unsubscribbed from Mattermost.
+
+![Peek 2020-02-23 17-45](https://user-images.githubusercontent.com/17708702/75111871-4390b080-5636-11ea-8c8f-e7c7e0799dda.gif)
 
 ### Help command
 `/netlify help`
