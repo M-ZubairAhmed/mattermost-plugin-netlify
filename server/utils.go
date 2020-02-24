@@ -117,8 +117,7 @@ func (p *Plugin) getNetlifyClientCredentials(userID string) (runtime.ClientAuthI
 	return openAPICredentials, nil
 }
 
-func (p *Plugin) getNetlifyClient() (*plumbing.Netlify, context.Context) {
-	// Create an HTTP client
+func (p *Plugin) getHTTPClient() *http.Client {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
@@ -134,11 +133,15 @@ func (p *Plugin) getNetlifyClient() (*plumbing.Netlify, context.Context) {
 			MaxIdleConnsPerHost:   -1,
 			DisableKeepAlives:     true}}
 
+	return httpClient
+}
+
+func (p *Plugin) getNetlifyClient() (*plumbing.Netlify, context.Context) {
 	// Create OpenAPI transport
-	transport := openapiClient.NewWithClient(NetlifyAPIHost, NetlifyAPIPath, plumbing.DefaultSchemes, httpClient)
+	transport := openapiClient.NewWithClient(NetlifyAPIHost, NetlifyAPIPath, plumbing.DefaultSchemes, p.getHTTPClient())
 	transport.SetDebug(true)
 
-	// Create Netlify client add it to context
+	// Create Netlify client by adding the transport to it
 	client := plumbing.New(transport, strfmt.Default)
 
 	// Create an empty context

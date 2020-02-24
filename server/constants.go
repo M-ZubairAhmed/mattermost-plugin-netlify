@@ -26,6 +26,12 @@ const NetlifyAPIPath = "/api/v1"
 // NetlifyDateLayout is the date format returned by Netlify api for dates
 const NetlifyDateLayout = "2006-01-02T15:04:05.000Z"
 
+// MattermostNetlifyBuildHookTitle is the title of build hooks created by mattermost
+const MattermostNetlifyBuildHookTitle = "Mattermost-Netlify-Build-Hook"
+
+// MattermostNetlifyBuildHookMessage will be message of all build hook deploys from mattermost
+const MattermostNetlifyBuildHookMessage = "triggered by Netlify Bot from Mattermost"
+
 // SuccessfullyNetlifyConnectedMessage is posted when /connect command is executed and completed
 const SuccessfullyNetlifyConnectedMessage string = "#### Welcome to the Mattermost Netlify Plugin!\n" +
 	"You've successfully connected your Mattermost account on Netlify.\n\n" +
