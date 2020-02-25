@@ -60,6 +60,15 @@ func (p *Plugin) sendBotEphemeralPostWithMessage(args *model.CommandArgs, text s
 	p.API.SendEphemeralPost(args.UserId, post)
 }
 
+func (p *Plugin) sendBotEphemeralPostWithMessageInChannel(channelID string, userID string, text string) {
+	post := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message:   text,
+	}
+	p.API.SendEphemeralPost(userID, post)
+}
+
 func (p *Plugin) sendBotPostOnChannel(args *model.CommandArgs, text string) *model.AppError {
 	// Construct the Post message
 	post := &model.Post{

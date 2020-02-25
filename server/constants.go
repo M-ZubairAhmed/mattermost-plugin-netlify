@@ -48,3 +48,8 @@ const MarkdownSiteListTableHeader string = `
 const MarkdownSiteListDetailTableHeader string = `
 | Name | ID |
 |------|:--:|`
+
+const (
+	ActionDisconnectPlugin = "ActionDisconnectPlugin"
+	ActionCancel           = "ActionCancel"
+)

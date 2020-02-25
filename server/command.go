@@ -115,7 +115,7 @@ func (p *Plugin) handleConnectCommand(c *plugin.Context, args *model.CommandArgs
 	}
 
 	// Send an ephemeral post with the link to connect netlify
-	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to link your Netlify account.](%s/plugins/netlify/auth/connect)", *siteURL))
+	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to connect your Netlify account with Mattermost.](%s/plugins/netlify/auth/connect)", *siteURL))
 
 	return &model.CommandResponse{}, nil
 }
@@ -131,20 +131,57 @@ func (p *Plugin) handleUnknownCommand(c *plugin.Context, args *model.CommandArgs
 }
 
 func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-	userID := args.UserId
-
-	// Unique identifier
-	accessTokenIdentifier := userID + NetlifyAuthTokenKVIdentifier
-
-	// Delete the access token from KV store
-	err := p.API.KVDelete(accessTokenIdentifier)
-	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Couldnt disconnect to Netlify services : %v", err.Error()))
+	// Check if SiteURL is defined in the app
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+	if siteURL == nil {
+		p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
 		return &model.CommandResponse{}, nil
 	}
 
-	// Send success disconnect message
-	p.sendBotEphemeralPostWithMessage(args, fmt.Sprint("Mattermost Netlify plugin is now disconnected"))
+	actionSecret := p.getConfiguration().EncryptionKey
+
+	deleteButton := &model.PostAction{
+		Type: "button",
+		Name: "Disconnect",
+		Integration: &model.PostActionIntegration{
+			URL: fmt.Sprintf("%s/plugins/netlify/command/disconnect", *siteURL),
+			Context: map[string]interface{}{
+				"action":       ActionDisconnectPlugin,
+				"actionSecret": actionSecret,
+			},
+		},
+	}
+
+	cancelButton := &model.PostAction{
+		Type: "button",
+		Name: "Cancel",
+		Integration: &model.PostActionIntegration{
+			URL: fmt.Sprintf("%s/plugins/netlify/command/disconnect", *siteURL),
+			Context: map[string]interface{}{
+				"action":       ActionCancel,
+				"actionSecret": actionSecret,
+			},
+		},
+	}
+
+	deleteMessageAttachment := &model.SlackAttachment{
+		Title: "Disconnect Netlify plugin",
+		Text: ":scissors: Are you sure you would like to disconnect Netlify from Mattermost?\n" +
+			"If you have any question or concerns please [report](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/issues/new)",
+		Actions: []*model.PostAction{deleteButton, cancelButton},
+	}
+
+	deletePost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		// Message:   text,
+		Props: map[string]interface{}{
+			"attachments": []*model.SlackAttachment{deleteMessageAttachment},
+		},
+	}
+
+	p.API.SendEphemeralPost(args.UserId, deletePost)
+
 	return &model.CommandResponse{}, nil
 }
 

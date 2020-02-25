@@ -28,6 +28,9 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	if route == "/auth/redirect" {
 		p.handleAuthRedirectFromNetlify(w, r)
 	}
+	if route == "/command/disconnect" {
+		p.handleDisconnectCommandResponse(w, r)
+	}
 }
 
 func (p *Plugin) getOAuthConfig() *oauth2.Config {
@@ -165,4 +168,61 @@ func (p *Plugin) handleAuthRedirectFromNetlify(w http.ResponseWriter, r *http.Re
 
 	w.Header().Set("Content-Type", "text/html")
 	w.Write(redirectedOAuthPageHTML)
+}
+
+func (p *Plugin) handleDisconnectCommandResponse(w http.ResponseWriter, r *http.Request) {
+	// Check if this was passed within Mattermost
+	authUserID := r.Header.Get("Mattermost-User-ID")
+	if authUserID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the information from Body which contain the interactive Message Attachment we sent from /disconnect command
+	intergrationResponseFromCommand := model.PostActionIntegrationRequestFromJson(r.Body)
+
+	userID := intergrationResponseFromCommand.UserId
+	actionToBeTaken := intergrationResponseFromCommand.Context["action"].(string)
+	channelID := intergrationResponseFromCommand.ChannelId
+	originalPostID := intergrationResponseFromCommand.PostId
+	actionSecret := p.getConfiguration().EncryptionKey
+	actionSecretPassed := intergrationResponseFromCommand.Context["actionSecret"].(string)
+
+	if actionToBeTaken == ActionDisconnectPlugin && actionSecret == actionSecretPassed {
+		// Unique identifier
+		accessTokenIdentifier := userID + NetlifyAuthTokenKVIdentifier
+
+		// Delete the access token from KV store
+		err := p.API.KVDelete(accessTokenIdentifier)
+		if err != nil {
+			p.API.DeleteEphemeralPost(userID, originalPostID)
+			p.sendBotEphemeralPostWithMessageInChannel(channelID, userID, fmt.Sprintf("Couldn't disconnect to Netlify services : %v", err.Error()))
+			return
+		}
+
+		// Send and override success disconnect message
+		p.API.UpdateEphemeralPost(userID, &model.Post{
+			Id:        originalPostID,
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprint(
+				":zzz: Mattermost Netlify plugin is now disconnected\n" +
+					"If you ever want to connect again, just run `/netlify connect`"),
+		})
+		return
+	}
+
+	if actionToBeTaken == ActionCancel && actionSecret == actionSecretPassed {
+		p.API.UpdateEphemeralPost(userID, &model.Post{
+			Id:        originalPostID,
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message:   fmt.Sprint(":mattermost: Thank you for choosing Netlify plugin to stay connected"),
+		})
+		return
+	}
+
+	// If secret don't match or action is not the one we want.
+	http.Error(w, "Unauthorized or unknown disconnect action detected", http.StatusInternalServerError)
+	p.API.DeleteEphemeralPost(userID, originalPostID)
 }
