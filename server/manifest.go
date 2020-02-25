@@ -28,9 +28,6 @@ const manifestStr = `
     },
     "executable": ""
   },
-  "webapp": {
-    "bundle_path": "webapp/dist/main.js"
-  },
   "settings_schema": {
     "header": "The Netlify plugin for Mattermost allows users to control your netlify sites right from Mattermost",
     "footer": "Made with Love and Support from Mattermost Team by Md Zubair Ahmed",
