@@ -14,10 +14,15 @@
   * [Slash commands](#slash-commands)
       + [Connect](#connect-command)
       + [Disconnect](#disconnect-command)
+      + [Me](#me-command)
       + [Help](#help-command)
       + [List](#list-command)
+      + [List IDs](#list-id-command)
+      + [Deploy](#deploy-command)
 - [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
+   * [Repository submission](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/blob/master/hackathon-submissions/m-zubairahmed-mattermost-plugin-netlify.md)
+   * [Pull request link](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/pull/3)
 
 ## Installation
 Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section. For more help on how to install a custom plugin refers [installing custom plugin docs](https://docs.mattermost.com/administration/plugins.html#custom-plugins).
@@ -82,6 +87,13 @@ This commands clears out authentication between netlify and mattermost. All the 
 
 ![disconnect-gif](https://user-images.githubusercontent.com/17708702/75114689-341e6100-5650-11ea-864c-c10614a22797.gif)
 
+### Me command
+`/netlify me`
+
+This commands show revelant information of the Netlify account connected to Mattermost via the plugin.
+
+![me-gif](https://user-images.githubusercontent.com/17708702/75216034-93808c00-578a-11ea-9262-4d1fa6d7ab59.gif)
+
 ### Help command
 `/netlify help`
 
@@ -93,3 +105,17 @@ It shows all the commands which are available for user to interact with Netlify 
 It tabulates all the sites information of Netlify account. It lists name, url, custom domain, repository, deployed branch, managed by team, last updated of the site.
 
 ![list-gif](https://user-images.githubusercontent.com/17708702/75114697-41d3e680-5650-11ea-9684-c95a44a5f12d.gif)
+
+### List Id command
+`/netlify list id`
+
+This is usually a precursor command which you will be using to obtain site ids of you netlify hosted sites. It tabulates your sites along with its ids. For instance, you can run this command and get the id of the site you would like to deploy and pass in the id to deploy command.
+
+![list-id-gif](https://user-images.githubusercontent.com/17708702/75215322-3552a980-5788-11ea-9437-487259dcff89.gif)
+
+### Deploy command
+`/netlify deploy <site_id>`
+
+It triggers a new build on your site. At a time only one site can be built. Site Id could be obtained by running *list id* command. When deployed through this command your netlify site deploy message will be *triggered by Netlify Bot from Mattermost*. It will also automatically create a build webhook in your netlify application under the name `Mattermost-Netlify-Build-Hook`, care must be taken not to delete it while running the Netlify bot.
+
+![deploy-gi](https://user-images.githubusercontent.com/17708702/75215765-aa72ae80-5789-11ea-9600-c0635817c6fc.gif)
