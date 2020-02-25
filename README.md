@@ -92,12 +92,12 @@ This commands clears out authentication between netlify and mattermost. All the 
 
 This commands show revelant information of the Netlify account connected to Mattermost via the plugin.
 
+![me-gif](https://user-images.githubusercontent.com/17708702/75216034-93808c00-578a-11ea-9262-4d1fa6d7ab59.gif)
+
 ### Help command
 `/netlify help`
 
 It shows all the commands which are available for user to interact with Netlify bot.
-
-![me-gif](https://user-images.githubusercontent.com/17708702/75216034-93808c00-578a-11ea-9262-4d1fa6d7ab59.gif)
 
 ### List command
 `/netlify list`
