@@ -18,7 +18,7 @@ const manifestStr = `
   "homepage_url": "https://github.com/m-zubairahmed/mattermost-plugin-netlify",
   "support_url": "https://github.com/m-zubairahmed/mattermost-plugin-netlify/issues",
   "icon_path": "assets/icon.svg",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "min_server_version": "5.14.0",
   "server": {
     "executables": {
