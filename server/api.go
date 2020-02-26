@@ -217,7 +217,7 @@ func (p *Plugin) handleDisconnectCommandResponse(w http.ResponseWriter, r *http.
 			Id:        originalPostID,
 			UserId:    p.BotUserID,
 			ChannelId: channelID,
-			Message:   fmt.Sprint(":mattermost: Thank you for choosing Netlify plugin to stay connected"),
+			Message:   fmt.Sprint("Thank you for choosing Netlify plugin to stay connected with :mattermost: Mattermost"),
 		})
 		return
 	}
