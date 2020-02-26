@@ -109,7 +109,7 @@ It tabulates all the sites information of Netlify account. It lists name, url, c
 ### List Id command
 `/netlify list id`
 
-This is usually a precursor command which you will be using to obtain site ids of you netlify hosted sites. It tabulates your sites along with its ids. For instance, you can run this command and get the id of the site you would like to deploy and pass in the id to deploy command.
+This is usually a precursor command which you will be using to obtain site ids of you netlify hosted sites. It tabulates your sites along with its ids.
 
 ![list-id-gif](https://user-images.githubusercontent.com/17708702/75215322-3552a980-5788-11ea-9437-487259dcff89.gif)
 
