@@ -86,6 +86,23 @@ func (p *Plugin) sendBotPostOnChannel(args *model.CommandArgs, text string) *mod
 	return nil
 }
 
+func (p *Plugin) createBotPost(channelID string, text string) *model.AppError {
+	// Construct the Post message
+	post := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message:   text,
+	}
+
+	// Send the Post
+	_, err := p.API.CreatePost(post)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Plugin) sendBotPostOnDM(userID string, message string) *model.AppError {
 	// Get the Bot Direct Message channel
 	directChannel, err := p.API.GetDirectChannel(userID, p.BotUserID)

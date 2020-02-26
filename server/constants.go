@@ -2,35 +2,44 @@ package main
 
 type ctxKey int
 
-// NetlifyAPIPorcelainLibraryClientKey uniquely identifies context of netlify porcelain library client
-const NetlifyAPIPorcelainLibraryClientKey ctxKey = 1 + iota
+// Netlify Library client related
+const (
+	// NetlifyAPIPorcelainLibraryClientKey uniquely identifies context of netlify porcelain library client
+	NetlifyAPIPorcelainLibraryClientKey ctxKey = 1 + iota
 
-// NetlifyAPIPlumbingLibraryClientKey uniquely identifies context of netlify plumbing library client
-const NetlifyAPIPlumbingLibraryClientKey ctxKey = 2 + iota
+	// NetlifyAPIPlumbingLibraryClientKey uniquely identifies context of netlify plumbing library client
+	NetlifyAPIPlumbingLibraryClientKey ctxKey = 2 + iota
+)
 
 // NetlifyAuthTokenKVIdentifier is used to in suffix with userID to identify key in KV store
 const NetlifyAuthTokenKVIdentifier string = "_netlifyToken"
 
-// NetlifyAuthURL is auth url to make authentication to netlify
-const NetlifyAuthURL = "https://app.netlify.com/authorize"
+// Netlify specific constants
+const (
+	// NetlifyAuthURL is auth url to make authentication to netlify
+	NetlifyAuthURL = "https://app.netlify.com/authorize"
 
-// NetlifyTokenURL is token url to get token from netlify
-const NetlifyTokenURL = "https://api.netlify.com/oauth/token"
+	// NetlifyTokenURL is token url to get token from netlify
+	NetlifyTokenURL = "https://api.netlify.com/oauth/token"
 
-// NetlifyAPIHost is the base URL for making Netlify API request
-const NetlifyAPIHost = "api.netlify.com"
+	// NetlifyAPIHost is the base URL for making Netlify API request
+	NetlifyAPIHost = "api.netlify.com"
 
-// NetlifyAPIPath is path attached to baseURL for making Netlify API request
-const NetlifyAPIPath = "/api/v1"
+	// NetlifyAPIPath is path attached to baseURL for making Netlify API request
+	NetlifyAPIPath = "/api/v1"
 
-// NetlifyDateLayout is the date format returned by Netlify api for dates
-const NetlifyDateLayout = "2006-01-02T15:04:05.000Z"
+	// NetlifyDateLayout is the date format returned by Netlify api for dates
+	NetlifyDateLayout = "2006-01-02T15:04:05.000Z"
+)
 
-// MattermostNetlifyBuildHookTitle is the title of build hooks created by mattermost
-const MattermostNetlifyBuildHookTitle = "Mattermost-Netlify-Build-Hook"
+// Netlify Build hook related
+const (
+	// MattermostNetlifyBuildHookTitle is the title of build hooks created by mattermost
+	MattermostNetlifyBuildHookTitle = "Mattermost-Netlify-Build-Hook"
 
-// MattermostNetlifyBuildHookMessage will be message of all build hook deploys from mattermost
-const MattermostNetlifyBuildHookMessage = "triggered by Netlify Bot from Mattermost"
+	// MattermostNetlifyBuildHookMessage will be message of all build hook deploys from mattermost
+	MattermostNetlifyBuildHookMessage = "triggered by Netlify Bot from Mattermost"
+)
 
 // SuccessfullyNetlifyConnectedMessage is posted when /connect command is executed and completed
 const SuccessfullyNetlifyConnectedMessage string = "#### Welcome to the Mattermost Netlify Plugin!\n" +
@@ -50,6 +59,8 @@ const MarkdownSiteListDetailTableHeader string = `
 |------|:--:|`
 
 const (
+	// ActionDisconnectPlugin is used in Post action to identify disconnect button action
 	ActionDisconnectPlugin = "ActionDisconnectPlugin"
-	ActionCancel           = "ActionCancel"
+	// ActionCancel can be used in any Post action to identify cancel action
+	ActionCancel = "ActionCancel"
 )

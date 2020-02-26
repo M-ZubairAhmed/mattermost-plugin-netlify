@@ -1,17 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
-	netlifyModels "github.com/netlify/open-api/go/models"
-	netlifyPlumbingModels "github.com/netlify/open-api/go/plumbing/operations"
 )
 
 // Custom slash commands to setup
@@ -76,7 +71,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	// "/netlify deploy"
 	if action == "deploy" {
-		return p.handleBuildCommand(args, parameters)
+		return p.handleDeployCommand(args, parameters)
 	}
 
 	// "/netlify xyz"
@@ -141,7 +136,7 @@ func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandA
 	actionSecret := p.getConfiguration().EncryptionKey
 
 	deleteButton := &model.PostAction{
-		Type: "button",
+		Type: model.POST_ACTION_TYPE_BUTTON,
 		Name: "Disconnect",
 		Integration: &model.PostActionIntegration{
 			URL: fmt.Sprintf("%s/plugins/netlify/command/disconnect", *siteURL),
@@ -153,7 +148,7 @@ func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandA
 	}
 
 	cancelButton := &model.PostAction{
-		Type: "button",
+		Type: model.POST_ACTION_TYPE_BUTTON,
 		Name: "Cancel",
 		Integration: &model.PostActionIntegration{
 			URL: fmt.Sprintf("%s/plugins/netlify/command/disconnect", *siteURL),
@@ -340,26 +335,25 @@ func (p *Plugin) handleMeCommand(args *model.CommandArgs) (*model.CommandRespons
 	return &model.CommandResponse{}, nil
 }
 
-func (p *Plugin) handleBuildCommand(args *model.CommandArgs, parameters []string) (*model.CommandResponse, *model.AppError) {
-	// Need to input at least one site id
-	if len(parameters) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-			":warning: Please mention site id after build command\n"+
-				"Eg. `/netlify deploy <site id>` , for more details run help command"))
-		return &model.CommandResponse{}, nil
-	}
-
-	// Cannot build more than 1 sites at a time
-	if len(parameters) > 1 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-			":warning: Please mention only one site id for a command.\n"+
-				"Eg. `/netlify deploy <site id>` , for more details run help command"))
-		return &model.CommandResponse{}, nil
-	}
-
-	// Get site ID from parameters
-	siteID := parameters[0]
+func (p *Plugin) handleDeployCommand(args *model.CommandArgs, parameters []string) (*model.CommandResponse, *model.AppError) {
 	userID := args.UserId
+	actionSecret := p.getConfiguration().EncryptionKey
+
+	// Check if SiteURL is defined in the app
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+	if siteURL == nil {
+		p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+		return &model.CommandResponse{}, nil
+	}
+
+	// Make command responsive and convey that we are doing work
+	waitPost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Message:   ":hourglass: Please hang on while we get the list of all deployable sites from your Netlify account",
+	}
+
+	p.API.SendEphemeralPost(userID, waitPost)
 
 	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
 	if err != nil {
@@ -369,139 +363,67 @@ func (p *Plugin) handleBuildCommand(args *model.CommandArgs, parameters []string
 		return &model.CommandResponse{}, nil
 	}
 
-	netlifyClient, ctx := p.getNetlifyClient()
+	netlifyClient, _ := p.getNetlifyClient()
 
-	// Construct request parameters
-	getSiteParameters := &netlifyPlumbingModels.GetSiteParams{
-		SiteID:  siteID,
-		Context: ctx,
-	}
-
-	// Get site details
-	getSiteResponse, err := netlifyClient.Operations.GetSite(getSiteParameters, netlifyClientCredentials)
+	// Execute list site func from netlify library
+	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyClientCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-			":exclamation: Failed to get site details\n"+
-				"*Error : %v*", err.Error()))
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
-	// Site details of the passed in site
-	site := getSiteResponse.GetPayload()
+	sites := listSitesResponse.GetPayload()
 
-	siteBranch := site.BuildSettings.RepoBranch
-	siteName := site.Name
-
-	// Give a message saying we are preparing to deploy
-	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-		":loudspeaker: Mattermost Netlify Bot is preparing to deploy **%v** branch of **%v** site.", siteBranch, siteName))
-
-	// Check if build hook from Mattermost already exist
-	listBuildHooksParams := &netlifyPlumbingModels.ListSiteBuildHooksParams{
-		SiteID:  siteID,
-		Context: ctx,
-	}
-	listBuildHooksResponse, err := netlifyClient.Operations.ListSiteBuildHooks(listBuildHooksParams, netlifyClientCredentials)
-	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-			":exclamation: Failed to get **%v** site build hooks.\n"+
-				"*Error : %v*", siteName, err.Error()))
+	// If user has no netlify sites
+	if len(sites) == 0 {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
-	// All of the build hooks available with the site
-	listBuildHooks := listBuildHooksResponse.GetPayload()
+	// Create an empty array of options we will be using for dropdown
+	var sitesListDropdown []*model.PostActionOptions
 
-	// Loop over hooks available to check if MM specific hook exists
-	var mmBuildHookExists bool = false
-	var existingBuildHookURL string
-	for _, buildHook := range listBuildHooks {
-		if buildHook.Title == MattermostNetlifyBuildHookTitle {
-			mmBuildHookExists = true
-			existingBuildHookURL = buildHook.URL
-			break
+	// Loop over all the sites
+	for _, site := range sites {
+		siteOption := &model.PostActionOptions{
+			Text:  fmt.Sprintf("%v (%v branch)", site.Name, site.BuildSettings.RepoBranch),
+			Value: fmt.Sprintf("%v %v %v", site.ID, site.Name, site.BuildSettings.RepoBranch),
 		}
+		// Store name, id and branch information of all the sites inside the dropdown option
+		sitesListDropdown = append(sitesListDropdown, siteOption)
 	}
 
-	// If build hook already exists then send webhook event
-	if mmBuildHookExists == true {
-		err := p.sendWebhookForSiteBuild(existingBuildHookURL, siteBranch)
-		if err != nil {
-			p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-				":exclamation: Failed to deploy **%v** site with Mattermost build hook.\n"+
-					"*Error : %v*", siteName, err.Error()))
-			return &model.CommandResponse{}, nil
-		}
-
-		p.sendBotPostOnChannel(args, fmt.Sprintf(
-			":satellite: Mattermost Netlify Bot has successfully asked Netlify to deploy **%v** branch of **%v** site.", siteBranch, siteName))
-		return &model.CommandResponse{}, nil
-	}
-
-	createSiteBuildHookParams := &netlifyPlumbingModels.CreateSiteBuildHookParams{
-		SiteID: siteID,
-		BuildHook: &netlifyModels.BuildHook{
-			Title:  MattermostNetlifyBuildHookTitle,
-			Branch: siteBranch,
+	// Construct a dropdown
+	sitesDropdown := &model.PostAction{
+		Type:     model.POST_ACTION_TYPE_SELECT,
+		Name:     "Select a site",
+		Disabled: false,
+		Options:  sitesListDropdown,
+		Integration: &model.PostActionIntegration{
+			URL: fmt.Sprintf("%s/plugins/netlify/command/deploy", *siteURL),
+			Context: map[string]interface{}{
+				"actionSecret": actionSecret,
+			},
 		},
-		Context: ctx,
 	}
 
-	// Create a MM webhook if no existing MM build hook is present
-	createdSiteBuildHookResponse, err := netlifyClient.Operations.CreateSiteBuildHook(createSiteBuildHookParams, netlifyClientCredentials)
-	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-			":exclamation: Failed to create a deploy hook for **%v** site.\n"+
-				"*Error : %v*", siteName, err.Error()))
-		return &model.CommandResponse{}, nil
+	deployCommandInteractiveMessage := &model.SlackAttachment{
+		Title:   "Deploy your Netlify sites",
+		Text:    "Select a site to deploy or redeploy from the list of sites below:\n",
+		Actions: []*model.PostAction{sitesDropdown},
+		Footer:  "Selecting a site from the dropdown will be the final selection. Please be sure before selecting.",
 	}
 
-	mmBuildHookCreated := createdSiteBuildHookResponse.GetPayload()
-
-	// Send the webhook request for new deploy on newly created webhook of MM
-	err = p.sendWebhookForSiteBuild(mmBuildHookCreated.URL, siteBranch)
-	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
-			":exclamation: Failed to deploy **%v** site with Mattermost build hook.\n"+
-				"*Error : %v*", siteName, err.Error()))
-		return &model.CommandResponse{}, nil
+	deployCommandPost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Props: map[string]interface{}{
+			"attachments": []*model.SlackAttachment{deployCommandInteractiveMessage},
+		},
 	}
 
-	p.sendBotPostOnChannel(args, fmt.Sprintf(
-		":satellite: Mattermost Netlify Bot has successfully asked Netlify to deploy **%v** branch of **%v** site.", siteBranch, siteName))
+	// Present the user with the site dropdown
+	p.API.SendEphemeralPost(userID, deployCommandPost)
 
 	return &model.CommandResponse{}, nil
-}
-
-func (p *Plugin) sendWebhookForSiteBuild(baseWebhookURL string, branch string) error {
-	emptyBody := bytes.NewBuffer([]byte{})
-
-	webhookURL, err := url.Parse(baseWebhookURL)
-	if err != nil {
-		return err
-	}
-
-	// Add build url parameters
-	webhookParams := url.Values{}
-	webhookParams.Add("trigger_branch", branch)
-	webhookParams.Add("trigger_title", MattermostNetlifyBuildHookMessage)
-	webhookURL.RawQuery = webhookParams.Encode()
-
-	request, err := http.NewRequest("POST", webhookURL.String(), emptyBody)
-	if err != nil {
-		return err
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-
-	httpClient := p.getHTTPClient()
-
-	response, err := httpClient.Do(request)
-	if err != nil || response.StatusCode != 200 {
-		return err
-	}
-
-	defer response.Body.Close()
-
-	return nil
 }

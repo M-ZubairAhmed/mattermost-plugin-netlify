@@ -1,15 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
+	netlifyModels "github.com/netlify/open-api/go/models"
+	netlifyPlumbingModels "github.com/netlify/open-api/go/plumbing/operations"
 	"golang.org/x/oauth2"
 )
 
@@ -21,15 +25,21 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	// Identify unique routes of the API
 	route := r.URL.Path
 
-	// oauth/connect : When user execute /connect go to netlify auth page
+	// When user execute /connect go to netlify auth page
 	if route == "/auth/connect" {
 		p.handleRedirectUserToNetlifyAuthPage(w, r)
 	}
+	// When user is redirected back from Netlify to MM for access token extraction
 	if route == "/auth/redirect" {
 		p.handleAuthRedirectFromNetlify(w, r)
 	}
+	// When user selects a button from the options when user enters disconnect command
 	if route == "/command/disconnect" {
 		p.handleDisconnectCommandResponse(w, r)
+	}
+	// When user selects a site from options provided when deploy command is executed
+	if route == "/command/deploy" {
+		p.handleDeployCommandResponse(w, r)
 	}
 }
 
@@ -225,4 +235,208 @@ func (p *Plugin) handleDisconnectCommandResponse(w http.ResponseWriter, r *http.
 	// If secret don't match or action is not the one we want.
 	http.Error(w, "Unauthorized or unknown disconnect action detected", http.StatusInternalServerError)
 	p.API.DeleteEphemeralPost(userID, originalPostID)
+}
+
+func (p *Plugin) sendWebhookForSiteBuild(baseWebhookURL string, branch string) error {
+	emptyBody := bytes.NewBuffer([]byte{})
+
+	webhookURL, err := url.Parse(baseWebhookURL)
+	if err != nil {
+		return err
+	}
+
+	// Add build url parameters
+	webhookParams := url.Values{}
+	webhookParams.Add("trigger_branch", branch)
+	webhookParams.Add("trigger_title", MattermostNetlifyBuildHookMessage)
+	webhookURL.RawQuery = webhookParams.Encode()
+
+	request, err := http.NewRequest("POST", webhookURL.String(), emptyBody)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	httpClient := p.getHTTPClient()
+
+	response, err := httpClient.Do(request)
+	if err != nil || response.StatusCode != 200 {
+		return err
+	}
+
+	defer response.Body.Close()
+
+	return nil
+}
+
+func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Request) {
+	// Check if this was passed within Mattermost
+	authUserID := r.Header.Get("Mattermost-User-ID")
+	if authUserID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse the JSON
+	intergrationResponseFromCommand := model.PostActionIntegrationRequestFromJson(r.Body)
+
+	userID := intergrationResponseFromCommand.UserId
+	channelID := intergrationResponseFromCommand.ChannelId
+
+	// Comprises of id name branch
+	selectedOption := intergrationResponseFromCommand.Context["selected_option"].(string)
+
+	// Get the netlify client
+	netlifyClient, ctx := p.getNetlifyClient()
+	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Authentication failed\n"+
+					"*Error : %v*", err.Error()),
+		})
+		return
+	}
+
+	// Get the information from Body which contain the interactive Message Attachment we sent from /disconnect command
+	selectedOptionsValue := strings.Fields(selectedOption)
+
+	// Extract the selected site information
+	siteID := selectedOptionsValue[0]
+	siteName := selectedOptionsValue[1]
+	siteBranch := selectedOptionsValue[2]
+
+	actionSecret := p.getConfiguration().EncryptionKey
+	actionSecretPassed := intergrationResponseFromCommand.Context["actionSecret"].(string)
+
+	// If action was not initiated from within MM
+	if actionSecret != actionSecretPassed {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Authentication failed\n"+
+					"*Error : %v*", err.Error()),
+		})
+		return
+	}
+
+	// Check if any is empty
+	if len(selectedOptionsValue) == 0 || len(siteID) == 0 || len(siteName) == 0 || len(siteBranch) == 0 {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: One of more values while selecting from dropdown were empty"),
+		})
+		return
+	}
+
+	// Update the message of original dropdown message post
+	p.API.UpdateEphemeralPost(intergrationResponseFromCommand.UserId, &model.Post{
+		Id:        intergrationResponseFromCommand.PostId,
+		UserId:    p.BotUserID,
+		ChannelId: intergrationResponseFromCommand.ChannelId,
+		Message:   fmt.Sprintf(":loudspeaker: Mattermost Netlify Bot is preparing to deploy **%v** branch of **%v** site.", siteBranch, siteName),
+	})
+
+	// Check if build hook from Mattermost already exist
+	listBuildHooksParams := &netlifyPlumbingModels.ListSiteBuildHooksParams{
+		SiteID:  siteID,
+		Context: ctx,
+	}
+	listBuildHooksResponse, err := netlifyClient.Operations.ListSiteBuildHooks(listBuildHooksParams, netlifyClientCredentials)
+	if err != nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Failed to get **%v** site build hooks.\n"+
+					"*Error : %v*", siteName, err.Error()),
+		})
+		return
+	}
+
+	// All of the build hooks available with the site
+	listBuildHooks := listBuildHooksResponse.GetPayload()
+
+	// Loop over hooks available to check if MM specific hook exists
+	var mmBuildHookExists bool = false
+	var existingBuildHookURL string
+	for _, buildHook := range listBuildHooks {
+		if buildHook.Title == MattermostNetlifyBuildHookTitle {
+			mmBuildHookExists = true
+			existingBuildHookURL = buildHook.URL
+			break
+		}
+	}
+
+	// If build hook already exists then send webhook event
+	if mmBuildHookExists == true {
+		err := p.sendWebhookForSiteBuild(existingBuildHookURL, siteBranch)
+		if err != nil {
+			p.API.SendEphemeralPost(userID, &model.Post{
+				UserId:    p.BotUserID,
+				ChannelId: channelID,
+				Message: fmt.Sprintf(
+					":exclamation: Failed to deploy **%v** site with Mattermost build hook.\n"+
+						"*Error : %v*", siteName, err.Error()),
+			})
+			return
+		}
+
+		// Successfully post a message saying existing MM webhook was used to deploy site
+		p.API.CreatePost(&model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":satellite: Mattermost Netlify Bot has successfully asked Netlify to deploy **%v** branch of **%v** site."+
+					"If you have configured notifications, you should be seeing one soon.", siteBranch, siteName),
+		})
+		return
+	}
+
+	// Create a MM webhook if no existing MM build hook is present
+	createSiteBuildHookParams := &netlifyPlumbingModels.CreateSiteBuildHookParams{
+		SiteID: siteID,
+		BuildHook: &netlifyModels.BuildHook{
+			Title:  MattermostNetlifyBuildHookTitle,
+			Branch: siteBranch,
+		},
+		Context: ctx,
+	}
+	createdSiteBuildHookResponse, err := netlifyClient.Operations.CreateSiteBuildHook(createSiteBuildHookParams, netlifyClientCredentials)
+	if err != nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Failed to create a deploy hook for **%v** site.\n"+
+					"*Error : %v*", siteName, err.Error()),
+		})
+		return
+	}
+
+	mmBuildHookCreated := createdSiteBuildHookResponse.GetPayload()
+
+	// Send the webhook request for new deploy on newly created webhook of MM
+	err = p.sendWebhookForSiteBuild(mmBuildHookCreated.URL, siteBranch)
+	if err != nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Failed to deploy **%v** site with Mattermost build hook.\n"+
+					"*Error : %v*", siteName, err.Error()),
+		})
+		return
+	}
+
+	p.createBotPost(channelID, fmt.Sprintf(
+		":satellite: Mattermost Netlify Bot has successfully asked Netlify to deploy **%v** branch of **%v** site.\n"+
+			"If you have configured notifications, you should be seeing one soon.", siteBranch, siteName))
+
 }
