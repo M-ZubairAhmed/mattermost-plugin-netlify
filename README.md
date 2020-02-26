@@ -85,7 +85,7 @@ By executing this command, the bot will post a link into the channel. Folllowing
 
 This commands clears out authentication between netlify and mattermost. All the notifications are also unsubscribbed from Mattermost.
 
-![disconnect-gif](https://user-images.githubusercontent.com/17708702/75114689-341e6100-5650-11ea-864c-c10614a22797.gif)
+![disconnect-gif](https://user-images.githubusercontent.com/17708702/75366081-18b48f80-58b6-11ea-9157-dc6b9fd21099.gif)
 
 ### Me command
 `/netlify me`
@@ -118,4 +118,4 @@ This is usually a precursor command which you will be using to obtain site ids o
 
 It triggers a new build on your site. At a time only one site can be built. Site Id could be obtained by running *list id* command. When deployed through this command your netlify site deploy message will be *triggered by Netlify Bot from Mattermost*. It will also automatically create a build webhook in your netlify application under the name `Mattermost-Netlify-Build-Hook`, care must be taken not to delete it while running the Netlify bot.
 
-![deploy-gi](https://user-images.githubusercontent.com/17708702/75215765-aa72ae80-5789-11ea-9600-c0635817c6fc.gif)
+![deploy-gif](https://user-images.githubusercontent.com/17708702/75365868-be1b3380-58b5-11ea-995e-c0a5ab0de054.gif)
