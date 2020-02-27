@@ -71,3 +71,36 @@ const (
 	// ActionCancel can be used in any Post action to identify cancel action
 	ActionCancel = "ActionCancel"
 )
+
+// Netlify Notification events types
+const (
+	NetlifyEventSubmissionCreated       = "submission_created"
+	NetlifyEventSplitTestActivated      = "split_test_activated"
+	NetlifyEventSplitTestDeactivated    = "split_test_deactivated"
+	NetlifyEventSplitTestModified       = "split_test_modified"
+	NetlifyEventLiveSessionConnected    = "live_session_connected"
+	NetlifyEventliveSessionDisconnected = "live_session_disconnected"
+
+	// NetlifyEventDeployBuilding is emitted when deploy is started
+	NetlifyEventDeployBuilding = "deploy_building"
+
+	// NetlifyEventDeployCreated is emitted when deploy is successfull
+	NetlifyEventDeployCreated = "deploy_created"
+
+	// NetlifyEventDeployFailed is emitted when deploy is failed
+	NetlifyEventDeployFailed = "deploy_failed"
+
+	NetlifyEventDeployLocked          = "deploy_locked"
+	NetlifyEventDeployUnlocked        = "deploy_unlocked"
+	NetlifyEventDeployRequestPending  = "deploy_request_pending"
+	NetlifyEventDeployRequestAccepted = "deploy_request_accepted"
+	NetlifyEventDeployRequestRejected = "deploy_request_rejected"
+)
+
+const (
+	NetlifyEventStateDeployCreated  = "ready"
+	NetlifyEventStateDeployBuilding = "building"
+	NetlifyEventStateDeployFailed   = "error"
+)
+
+const NetlifyEventTypeHeader = "X-Netlify-Event"

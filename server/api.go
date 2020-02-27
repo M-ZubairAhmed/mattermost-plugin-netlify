@@ -26,6 +26,9 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	// Identify unique routes of the API
 	route := r.URL.Path
 
+	if route == "/webhook" {
+		p.handleWebhooks(w, r)
+	}
 	// When user execute /connect go to netlify auth page
 	if route == "/auth/connect" {
 		p.handleRedirectUserToNetlifyAuthPage(w, r)
@@ -236,7 +239,7 @@ func (p *Plugin) handleDisconnectCommandResponse(w http.ResponseWriter, r *http.
 			Id:        originalPostID,
 			UserId:    p.BotUserID,
 			ChannelId: channelID,
-			Message:   fmt.Sprint("Thank you for choosing Netlify plugin to stay connected with :mattermost: Mattermost"),
+			Message:   fmt.Sprint(channelID + " "),
 		})
 		return
 	}
@@ -246,7 +249,7 @@ func (p *Plugin) handleDisconnectCommandResponse(w http.ResponseWriter, r *http.
 	p.API.DeleteEphemeralPost(userID, originalPostID)
 }
 
-func (p *Plugin) sendWebhookForSiteBuild(baseWebhookURL string, branch string) error {
+func (p *Plugin) sendBuildhookForSiteDeploy(baseWebhookURL string, branch string) error {
 	emptyBody := bytes.NewBuffer([]byte{})
 
 	webhookURL, err := url.Parse(baseWebhookURL)
@@ -384,7 +387,7 @@ func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Requ
 
 	// If build hook already exists then send webhook event
 	if mmBuildHookExists == true {
-		err := p.sendWebhookForSiteBuild(existingBuildHookURL, siteBranch)
+		err := p.sendBuildhookForSiteDeploy(existingBuildHookURL, siteBranch)
 		if err != nil {
 			p.API.SendEphemeralPost(userID, &model.Post{
 				UserId:    p.BotUserID,
@@ -431,7 +434,7 @@ func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Requ
 	mmBuildHookCreated := createdSiteBuildHookResponse.GetPayload()
 
 	// Send the webhook request for new deploy on newly created webhook of MM
-	err = p.sendWebhookForSiteBuild(mmBuildHookCreated.URL, siteBranch)
+	err = p.sendBuildhookForSiteDeploy(mmBuildHookCreated.URL, siteBranch)
 	if err != nil {
 		p.API.SendEphemeralPost(userID, &model.Post{
 			UserId:    p.BotUserID,
