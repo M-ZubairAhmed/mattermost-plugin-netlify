@@ -178,3 +178,11 @@ func (p *Plugin) getNetlifyClient() (*plumbing.Netlify, context.Context) {
 
 	return client, ctx
 }
+
+func truncateString(s string, i int) string {
+	runes := []rune(s)
+	if len(runes) > i {
+		return string(runes[:i])
+	}
+	return s + "..."
+}

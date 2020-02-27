@@ -48,10 +48,17 @@ const SuccessfullyNetlifyConnectedMessage string = "#### Welcome to the Mattermo
 	"Write about how to enable notifications.\n" +
 	"##### Slash Commands\n"
 
-// MarkdownSiteListTableHeader is a table rendered in markdown
-const MarkdownSiteListTableHeader string = `
+const (
+	// MarkdownSiteListTableHeader is a table rendered in markdown
+	MarkdownSiteListTableHeader string = `
 | Name   | URL           | Custom domain | Repository | Branch | Managed by | Last updated |
-|--------|:-------------:|:-------------:|------------|--------|------------|-------------:|`
+|:-------|:-------------:|:-------------:|------------|--------|------------|-------------:|`
+
+	// MarkdownDeployListTableHeader is table rendered in markdown to show info regarding site build
+	MarkdownDeployListTableHeader string = `
+| Sequence |   SHA  | Deployed at |  Deploy ID  |
+|:--------:|:-------|------------:|-------------|`
+)
 
 // MarkdownSiteListDetailTableHeader is a table rendered in markdown for list detail command
 const MarkdownSiteListDetailTableHeader string = `

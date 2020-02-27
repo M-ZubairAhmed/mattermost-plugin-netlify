@@ -71,7 +71,12 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	// "/netlify deploy"
 	if action == "deploy" {
-		return p.handleDeployCommand(args, parameters)
+		return p.handleDeployCommand(args)
+	}
+
+	// "/netlify rollback"
+	if action == "rollback" {
+		return p.handleRollbackCommand(args)
 	}
 
 	// "/netlify xyz"
@@ -335,7 +340,7 @@ func (p *Plugin) handleMeCommand(args *model.CommandArgs) (*model.CommandRespons
 	return &model.CommandResponse{}, nil
 }
 
-func (p *Plugin) handleDeployCommand(args *model.CommandArgs, parameters []string) (*model.CommandResponse, *model.AppError) {
+func (p *Plugin) handleDeployCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	userID := args.UserId
 	actionSecret := p.getConfiguration().EncryptionKey
 
@@ -424,6 +429,99 @@ func (p *Plugin) handleDeployCommand(args *model.CommandArgs, parameters []strin
 
 	// Present the user with the site dropdown
 	p.API.SendEphemeralPost(userID, deployCommandPost)
+
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleRollbackCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	userID := args.UserId
+	actionSecret := p.getConfiguration().EncryptionKey
+
+	// Check if SiteURL is defined in the app
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+	if siteURL == nil {
+		p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+		return &model.CommandResponse{}, nil
+	}
+
+	// Make command responsive and convey that we are doing work
+	waitPost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Message:   ":hourglass: Please hang on while we get the list of all rollback enabled sites from your Netlify account",
+	}
+
+	p.API.SendEphemeralPost(userID, waitPost)
+
+	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
+			":exclamation: Authentication failed\n"+
+				"*Error : %v*", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	netlifyClient, _ := p.getNetlifyClient()
+
+	// Execute list site func from netlify library
+	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyClientCredentials)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	sites := listSitesResponse.GetPayload()
+
+	// If user has no netlify sites
+	if len(sites) == 0 {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Create an empty array of options we will be using for dropdown
+	var sitesDropdownOptions []*model.PostActionOptions
+
+	// Loop over all the sites
+	for _, site := range sites {
+		siteOption := &model.PostActionOptions{
+			Text:  fmt.Sprintf("%v", site.Name),
+			Value: fmt.Sprintf("%v %v", site.ID, site.Name),
+		}
+		// Store name, id information of all the sites inside the dropdown option
+		sitesDropdownOptions = append(sitesDropdownOptions, siteOption)
+	}
+
+	// Construct a dropdown
+	sitesDropdown := &model.PostAction{
+		Type:     model.POST_ACTION_TYPE_SELECT,
+		Name:     "Select a site",
+		Disabled: false,
+		Options:  sitesDropdownOptions,
+		Integration: &model.PostActionIntegration{
+			URL: fmt.Sprintf("%s/plugins/netlify/command/rollback-builds", *siteURL),
+			Context: map[string]interface{}{
+				"actionSecret": actionSecret,
+			},
+		},
+	}
+
+	rollbackCommandInteractiveMessage := &model.SlackAttachment{
+		Title:   "Rollback your Netlify sites to previous versions",
+		Text:    "Select a site which you would like to rollback from the list of sites below:\n",
+		Actions: []*model.PostAction{sitesDropdown},
+		Footer:  "After the selection is made, you will be shown latest of maximum 5 deploys of the selected site to rollback",
+	}
+
+	rollbackCommandPost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Props: map[string]interface{}{
+			"attachments": []*model.SlackAttachment{rollbackCommandInteractiveMessage},
+		},
+	}
+
+	// Present the user with the site dropdown
+	p.API.SendEphemeralPost(userID, rollbackCommandPost)
 
 	return &model.CommandResponse{}, nil
 }

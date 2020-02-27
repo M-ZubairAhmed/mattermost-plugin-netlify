@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
@@ -40,6 +41,14 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	// When user selects a site from options provided when deploy command is executed
 	if route == "/command/deploy" {
 		p.handleDeployCommandResponse(w, r)
+	}
+	// When user selects a site from lists of sites, visible when rollback command is executed
+	if route == "/command/rollback-builds" {
+		p.handleRollbackCommandResponse(w, r)
+	}
+	// When user selects a build from list of builds of a site, coming in after selecting a site from rollback command
+	if route == "/command/rollback" {
+		p.handleRollbackBuildSelectResponse(w, r)
 	}
 }
 
@@ -284,9 +293,6 @@ func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Requ
 	userID := intergrationResponseFromCommand.UserId
 	channelID := intergrationResponseFromCommand.ChannelId
 
-	// Comprises of id name branch
-	selectedOption := intergrationResponseFromCommand.Context["selected_option"].(string)
-
 	// Get the netlify client
 	netlifyClient, ctx := p.getNetlifyClient()
 	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
@@ -300,6 +306,9 @@ func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Requ
 		})
 		return
 	}
+
+	// Comprises of id name branch
+	selectedOption := intergrationResponseFromCommand.Context["selected_option"].(string)
 
 	// Get the information from Body which contain the interactive Message Attachment we sent from /disconnect command
 	selectedOptionsValue := strings.Fields(selectedOption)
@@ -318,8 +327,7 @@ func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Requ
 			UserId:    p.BotUserID,
 			ChannelId: channelID,
 			Message: fmt.Sprintf(
-				":exclamation: Authentication failed\n"+
-					"*Error : %v*", err.Error()),
+				":exclamation: Authentication failed\n"),
 		})
 		return
 	}
@@ -438,5 +446,299 @@ func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Requ
 	p.createBotPost(channelID, fmt.Sprintf(
 		":satellite: Mattermost Netlify Bot has successfully asked Netlify to deploy **%v** branch of **%v** site.\n"+
 			"If you have configured notifications, you should be seeing one soon.", siteBranch, siteName))
+}
 
+func (p *Plugin) handleRollbackCommandResponse(w http.ResponseWriter, r *http.Request) {
+	// Check if this was passed within Mattermost
+	authUserID := r.Header.Get("Mattermost-User-ID")
+	if authUserID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse the JSON
+	intergrationResponseFromCommand := model.PostActionIntegrationRequestFromJson(r.Body)
+
+	userID := intergrationResponseFromCommand.UserId
+	channelID := intergrationResponseFromCommand.ChannelId
+
+	actionSecretPassed := intergrationResponseFromCommand.Context["actionSecret"].(string)
+	actionSecret := p.getConfiguration().EncryptionKey
+
+	// If action was not initiated from within MM
+	if actionSecret != actionSecretPassed {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Authentication failed\n"),
+		})
+		return
+	}
+
+	// Check if SiteURL is defined in the app
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+	if siteURL == nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Error! Site URL is not defined in the App\n"),
+		})
+		return
+	}
+
+	selectedOption := intergrationResponseFromCommand.Context["selected_option"].(string)
+	// Get the information from Body which contain the interactive Message Attachment we sent from /disconnect command
+	selectedOptionsValue := strings.Fields(selectedOption)
+
+	// Extract the selected site information
+	siteID := selectedOptionsValue[0]
+	siteName := selectedOptionsValue[1]
+
+	// Check if any is empty
+	if len(selectedOptionsValue) == 0 || len(siteID) == 0 || len(siteName) == 0 {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: One of more values while selecting from dropdown were empty"),
+		})
+		return
+	}
+
+	// Get the netlify client
+	netlifyClient, ctx := p.getNetlifyClient()
+	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Authentication failed\n"+
+					"*Error : %v*", err.Error()),
+		})
+		return
+	}
+
+	originalPostID := intergrationResponseFromCommand.PostId
+
+	// Update the message of original dropdown message post
+	p.API.UpdateEphemeralPost(userID, &model.Post{
+		Id:        originalPostID,
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message:   fmt.Sprintf(":one: Fetching list of 5 most recent deploys of **%v** site.", siteName),
+	})
+
+	listSiteBuildsParams := &netlifyPlumbingModels.ListSiteBuildsParams{
+		SiteID:  siteID,
+		Context: ctx,
+	}
+
+	listSiteDeploysResponse, err := netlifyClient.Operations.ListSiteBuilds(listSiteBuildsParams, netlifyClientCredentials)
+	if err != nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Failed to get **%v** site recent deploys.\n"+
+					"*Error : %v*", siteName, err.Error()),
+		})
+		return
+	}
+
+	// All of the previous builds of the site
+	listSiteDeploys := listSiteDeploysResponse.GetPayload()
+
+	// Create an empty array of options we will be using for dropdown
+	var sitesDeployListDropdownOptions []*model.PostActionOptions
+
+	// Create a table with just the header, rows will fill up in the loop
+	var deployMarkdownTable string = MarkdownDeployListTableHeader
+
+	var i int = 1
+	for index, deploy := range listSiteDeploys {
+		// Take only successfull deploys into consideration
+		if deploy.Done == true && len(deploy.Error) == 0 {
+			if i <= 5 {
+				// To restrict only to 5 entries
+				i = i + 1
+
+				var deploySHA string = "*Deployed via webhook or manually*"
+				if deploy.Sha != "" {
+					deploySHA = deploy.Sha
+				}
+
+				var deployedAt string = "-"
+				if deploy.CreatedAt != "" {
+					lastDeployedAtParsed, err := time.Parse(NetlifyDateLayout, deploy.CreatedAt)
+					if err == nil {
+						deployedAt = lastDeployedAtParsed.Format(time.RFC822)
+					}
+				}
+
+				// Construct table for details of deploy
+				var deployTableRow string = fmt.Sprintf("| %v | %v | %v | %v |", index, deploySHA, deployedAt, deploy.DeployID)
+				deployMarkdownTable = fmt.Sprintf("%v\n%v", deployMarkdownTable, deployTableRow)
+
+				siteDeployOption := &model.PostActionOptions{
+					Text:  fmt.Sprintf("To sequence No.%v", index),
+					Value: fmt.Sprintf("%v %v %v", siteID, siteName, deploy.DeployID),
+				}
+				// Store name, id information of all the sites inside the dropdown option
+				sitesDeployListDropdownOptions = append(sitesDeployListDropdownOptions, siteDeployOption)
+			} else {
+				break
+			}
+		}
+	}
+
+	// If there are no deploys, give the error message
+	if len(sitesDeployListDropdownOptions) == 0 {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":white-flag: There are no valid deploys with **%v** site.\n", siteName),
+		})
+		return
+	}
+
+	// Post a message with detail info of top 5 builds
+	p.createBotPost(channelID, fmt.Sprintf(":chains: List of latest 5 releases of **%v** Netlify site\n%v", siteName, deployMarkdownTable))
+
+	// Construct a dropdown
+	sitesDeployListDropdown := &model.PostAction{
+		Type:     model.POST_ACTION_TYPE_SELECT,
+		Name:     "Select a previous deploy version",
+		Disabled: false,
+		Options:  sitesDeployListDropdownOptions,
+		Integration: &model.PostActionIntegration{
+			// When the user selects an option following route will be handeled
+			URL: fmt.Sprintf("%s/plugins/netlify/command/rollback", *siteURL),
+			Context: map[string]interface{}{
+				"actionSecret": actionSecret,
+			},
+		},
+	}
+
+	sitesDeployListCommandInteractiveMessage := &model.SlackAttachment{
+		Title:   fmt.Sprintf("Rollback *%v* sites to previous versions", siteName),
+		Text:    fmt.Sprintf("Select a deploy version of %v site which you would like to rollback to:\n", siteName),
+		Actions: []*model.PostAction{sitesDeployListDropdown},
+		Footer:  "Before proceding refer the table of the most recent successful deploys posted above and then make your selection",
+	}
+
+	sitesDeployListCommandPost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Props: map[string]interface{}{
+			"attachments": []*model.SlackAttachment{sitesDeployListCommandInteractiveMessage},
+		},
+	}
+
+	p.API.SendEphemeralPost(userID, sitesDeployListCommandPost)
+}
+
+func (p *Plugin) handleRollbackBuildSelectResponse(w http.ResponseWriter, r *http.Request) {
+	// Check if this was passed within Mattermost
+	authUserID := r.Header.Get("Mattermost-User-ID")
+	if authUserID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse the JSON
+	intergrationResponseFromCommand := model.PostActionIntegrationRequestFromJson(r.Body)
+
+	userID := intergrationResponseFromCommand.UserId
+	channelID := intergrationResponseFromCommand.ChannelId
+
+	actionSecretPassed := intergrationResponseFromCommand.Context["actionSecret"].(string)
+	actionSecret := p.getConfiguration().EncryptionKey
+
+	// If action was not initiated from within MM
+	if actionSecret != actionSecretPassed {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Authentication failed\n"),
+		})
+		return
+	}
+
+	// Check if SiteURL is defined in the app
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+	if siteURL == nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Error! Site URL is not defined in the App\n"),
+		})
+		return
+	}
+
+	selectedOption := intergrationResponseFromCommand.Context["selected_option"].(string)
+	// Get the information from Body which contain the interactive Message Attachment we sent from /disconnect command
+	selectedOptionsValue := strings.Fields(selectedOption)
+
+	// Extract the selected site information
+	siteID := selectedOptionsValue[0]
+	siteName := selectedOptionsValue[1]
+	siteDeployID := selectedOptionsValue[2]
+
+	// Check if any is empty
+	if len(selectedOptionsValue) == 0 || len(siteID) == 0 || len(siteDeployID) == 0 {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: One of more values while selecting from dropdown were empty"),
+		})
+		return
+	}
+
+	// Get the netlify client
+	netlifyClient, ctx := p.getNetlifyClient()
+	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.API.SendEphemeralPost(userID, &model.Post{
+			UserId:    p.BotUserID,
+			ChannelId: channelID,
+			Message: fmt.Sprintf(
+				":exclamation: Authentication failed\n"+
+					"*Error : %v*", err.Error()),
+		})
+		return
+	}
+
+	originalPostID := intergrationResponseFromCommand.PostId
+
+	// Update the message of original dropdown message post
+	p.API.UpdateEphemeralPost(userID, &model.Post{
+		Id:        originalPostID,
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message:   fmt.Sprintf(":two: Preparing to rollback %v site to %v deploy id state", siteName, siteDeployID),
+	})
+
+	// Restore site to prev x state
+	restoreSiteDeployParams := &netlifyPlumbingModels.RestoreSiteDeployParams{
+		DeployID: siteDeployID,
+		SiteID:   siteID,
+		Context:  ctx,
+	}
+	netlifyClient.Operations.RestoreSiteDeploy(restoreSiteDeployParams, netlifyClientCredentials)
+
+	// Successfully post a message we asked netlify to re deploy
+	p.API.CreatePost(&model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message: fmt.Sprintf(
+			":satellite: Mattermost Netlify Bot has successfully asked Netlify to rollback **%v** site to a previously version by ID %v.\n"+
+				"*Since this is an update, you probably will not receive a build notification, You can visit the URL to see if its rolled back.*", siteName, siteDeployID),
+	})
 }
