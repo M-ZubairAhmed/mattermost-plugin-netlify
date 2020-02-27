@@ -19,6 +19,7 @@
       + [List](#list-command)
       + [List IDs](#list-id-command)
       + [Deploy](#deploy-command)
+      + [Rollback](#rollback-command)
 - [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
    * [Repository submission](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/blob/master/hackathon-submissions/m-zubairahmed-mattermost-plugin-netlify.md)
@@ -119,3 +120,10 @@ This is usually a precursor command which you will be using to obtain site ids o
 It triggers a new build on your site. At a time only one site can be built. Site Id could be obtained by running *list id* command. When deployed through this command your netlify site deploy message will be *triggered by Netlify Bot from Mattermost*. It will also automatically create a build webhook in your netlify application under the name `Mattermost-Netlify-Build-Hook`, care must be taken not to delete it while running the Netlify bot.
 
 ![deploy-gif](https://user-images.githubusercontent.com/17708702/75365868-be1b3380-58b5-11ea-995e-c0a5ab0de054.gif)
+
+### Rollback command
+`/netlify rollback`
+
+It can facilitate to quick rollback to a previous stable state of the website. The latest five releases are shown for a particular site to roll back the site to. Since this is not a deploy, notification are not enabled for this operation. But the site itself it rolled back internally and can be verified by checking the site url itself.
+
+![rollback-gif](https://user-images.githubusercontent.com/17708702/75423266-46411d80-5936-11ea-87c1-533e11d56dae.gif)
