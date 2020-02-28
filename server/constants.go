@@ -72,7 +72,7 @@ const (
 	ActionCancel = "ActionCancel"
 )
 
-// Netlify Notification events types
+// Netlify Notification Hook events types
 const (
 	NetlifyEventSubmissionCreated       = "submission_created"
 	NetlifyEventSplitTestActivated      = "split_test_activated"
@@ -97,10 +97,22 @@ const (
 	NetlifyEventDeployRequestRejected = "deploy_request_rejected"
 )
 
+// Information of state inside of incoming webhook55
 const (
 	NetlifyEventStateDeployCreated  = "ready"
 	NetlifyEventStateDeployBuilding = "building"
 	NetlifyEventStateDeployFailed   = "error"
 )
 
-const NetlifyEventTypeHeader = "X-Netlify-Event"
+// Types of Netlify Hooks
+const (
+	NetlifyHookTypeSlack = "slack"
+	NetlifyHookTypeURL   = "url"
+	NetlifyHookTypeEmail = "email"
+)
+
+// Header information inside of incoming webhook
+const (
+	NetlifyEventTypeHeader = "X-Netlify-Event"
+	NetlifyJWSHeader       = "X-Webhook-Signature"
+)

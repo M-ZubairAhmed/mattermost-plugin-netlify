@@ -53,7 +53,7 @@ func (p *Plugin) handleWebhooks(w http.ResponseWriter, r *http.Request) {
 		messageAttachment := &model.SlackAttachment{
 			Fallback:  fmt.Sprintf("There is a new deploy in process for %v", webhookEventData.Name),
 			Color:     "#c2a344",
-			Pretext:   fmt.Sprintf("There is a new deploy in process for **%v**", webhookEventData.Name),
+			Pretext:   fmt.Sprintf(":flight_departure: There is a new deploy in process for **%v**", webhookEventData.Name),
 			Title:     "Visit the build log",
 			TitleLink: buildLogURL,
 			Footer:    fmt.Sprintf("Using git %v branch", webhookEventData.Branch),
@@ -72,7 +72,7 @@ func (p *Plugin) handleWebhooks(w http.ResponseWriter, r *http.Request) {
 		messageAttachment := &model.SlackAttachment{
 			Fallback:  fmt.Sprintf("Successful deploy of %v", webhookEventData.Name),
 			Color:     "#3ab259",
-			Pretext:   fmt.Sprintf("Successful deploy of **%v**", webhookEventData.Name),
+			Pretext:   fmt.Sprintf(":rocket: Successful deploy of **%v**", webhookEventData.Name),
 			Title:     "Visit the changes live",
 			TitleLink: webhookEventData.DeploySSLURL,
 			Text:      fmt.Sprintf("Or check out the [build log](%v)", buildLogURL),
@@ -91,7 +91,7 @@ func (p *Plugin) handleWebhooks(w http.ResponseWriter, r *http.Request) {
 		messageAttachment := &model.SlackAttachment{
 			Fallback:  fmt.Sprintf("Something went wrong deploying %v", webhookEventData.Name),
 			Color:     "#b2593a",
-			Pretext:   fmt.Sprintf("Something went wrong deploying **%v**", webhookEventData.Name),
+			Pretext:   fmt.Sprintf(":fire: Something went wrong deploying **%v**", webhookEventData.Name),
 			Title:     "Visit the build log",
 			TitleLink: buildLogURL,
 			Text:      fmt.Sprintf("The last message we got from the build was `%v`", webhookEventData.ErrorMessage),
