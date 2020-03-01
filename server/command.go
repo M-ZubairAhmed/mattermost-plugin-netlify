@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattermost/mattermost-server/v5/mlog"
 	"github.com/mattermost/mattermost-server/v5/model"
 	"github.com/mattermost/mattermost-server/v5/plugin"
 )
@@ -16,7 +17,7 @@ func getCommand() *model.Command {
 		DisplayName:      "Netlify",
 		Description:      "Integration with Netlify",
 		AutoComplete:     true,
-		AutoCompleteDesc: "Available commands: connect, disconnect, list, list id, deploy, rollback, subscribe, me, help",
+		AutoCompleteDesc: "Available commands: connect, disconnect, list, list id, deploy, rollback, subscribe, unsubscribe, subscriptions, me, help",
 		AutoCompleteHint: "[command]",
 	}
 }
@@ -81,6 +82,10 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 
 	if action == "subscribe" {
 		return p.handleSubscribeCommand(args)
+	}
+
+	if action == "unsubscribe" {
+		return p.handleUnsubscribeCommand(args)
 	}
 
 	// "/netlify xyz"
@@ -559,8 +564,6 @@ func (p *Plugin) handleSubscribeCommand(args *model.CommandArgs) (*model.Command
 		return &model.CommandResponse{}, nil
 	}
 
-	// TODO Post list of sites subscribed on the channel
-
 	// Create an empty array of options we will be using for dropdown
 	var sitesDropdownOptions []*model.PostActionOptions
 
@@ -606,6 +609,64 @@ func (p *Plugin) handleSubscribeCommand(args *model.CommandArgs) (*model.Command
 
 	// Present the user with the site dropdown
 	p.API.SendEphemeralPost(userID, subscribeCommandPost)
+
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	channelID := args.ChannelId
+	userID := args.UserId
+
+	// Get the Netlify library client for interacting with netlify api
+	netlifyClient, _ := p.getNetlifyClient()
+
+	// Get Netlify credentials
+	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendMessageFromBot(channelID, userID, true,
+			fmt.Sprintf("Authentication failed : %v", err.Error()),
+		)
+		return &model.CommandResponse{}, nil
+	}
+
+	// Execute list site func from netlify library
+	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Get all sites from the response payload
+	sites := listSitesResponse.GetPayload()
+
+	// If user has no netlify sites
+	if len(sites) == 0 {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		return &model.CommandResponse{}, nil
+	}
+
+	// For each site, check in KV store if it has subscriptions
+	for _, site := range sites {
+		err := p.snapWebhookSubscriptionForSite(site.ID, channelID)
+		if err != nil {
+			mlog.Err(fmt.Errorf("Could not unsubscribe channel with %v site", site.Name))
+			p.API.SendEphemeralPost(userID, &model.Post{
+				UserId:    p.BotUserID,
+				ChannelId: channelID,
+				Message: fmt.Sprintf(
+					":exclamation: Could not unsubscribe channel with %v site\n"+
+						"*Error : %v*", site.Name, err.Error()),
+			})
+			return nil, &model.AppError{Message: err.Error()}
+		}
+	}
+
+	p.API.CreatePost(&model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message: fmt.Sprintf(
+			":no_bell:  Successfully unsubscribed this channel for build notifications from all your netlify sites.\n"),
+	})
 
 	return &model.CommandResponse{}, nil
 }

@@ -439,7 +439,7 @@ func removeDuplicatesFromSlice(intSlice []string) []string {
 	return list
 }
 
-func (p *Plugin) setWebhookSubscriptionsForSite(channelID, siteID string) error {
+func (p *Plugin) setWebhookSubscriptionsForSite(siteID, channelID string) error {
 	// Unique identifier
 	webhookIdentifier := siteID + NetlifyWebhookSubscriptionsKVIdentifier
 
@@ -494,4 +494,46 @@ func (p *Plugin) getWebhookSubscriptionForSite(siteID string) ([]string, error) 
 	}
 
 	return channelsSubscribedTo, nil
+}
+
+func (p *Plugin) snapWebhookSubscriptionForSite(siteID, channelID string) error {
+	channelsSubscribedTo, err := p.getWebhookSubscriptionForSite(siteID)
+	if err != nil {
+		return err
+	}
+
+	// If no subscription for site is on any channel
+	if len(channelsSubscribedTo) == 0 {
+		return nil
+	}
+
+	var filteredChannelsWithSubscription []string
+
+	for _, channelSubscribedTo := range channelsSubscribedTo {
+		if channelSubscribedTo != channelID {
+			filteredChannelsWithSubscription = append(filteredChannelsWithSubscription, channelSubscribedTo)
+		}
+	}
+
+	webhookIdentifier := siteID + NetlifyWebhookSubscriptionsKVIdentifier
+
+	// If the new filtered one has no channels
+	if len(filteredChannelsWithSubscription) == 0 {
+		appErr := p.API.KVDelete(webhookIdentifier)
+		if appErr != nil {
+			return appErr
+		}
+	}
+
+	// Convert to string
+	filteredChannelsWithSubscriptionString := strings.Join(filteredChannelsWithSubscription, " ")
+	// Convert to byte for storing remaining channels
+	filteredChannelsWithSubscriptionByte := []byte(filteredChannelsWithSubscriptionString)
+
+	appErr := p.API.KVSet(webhookIdentifier, filteredChannelsWithSubscriptionByte)
+	if appErr != nil {
+		return appErr
+	}
+
+	return nil
 }
