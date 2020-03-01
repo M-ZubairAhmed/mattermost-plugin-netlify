@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"time"
@@ -60,6 +61,15 @@ func (p *Plugin) sendBotEphemeralPostWithMessage(args *model.CommandArgs, text s
 	p.API.SendEphemeralPost(args.UserId, post)
 }
 
+func (p *Plugin) sendEphemeralBotPost(channelID string, userID string, text string) {
+	post := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message:   text,
+	}
+	p.API.SendEphemeralPost(userID, post)
+}
+
 func (p *Plugin) sendBotEphemeralPostWithMessageInChannel(channelID string, userID string, text string) {
 	post := &model.Post{
 		UserId:    p.BotUserID,
@@ -86,24 +96,44 @@ func (p *Plugin) sendBotPostOnChannel(args *model.CommandArgs, text string) *mod
 	return nil
 }
 
-func (p *Plugin) createBotPost(channelID string, text string) *model.AppError {
+// sendMessageFromBot can create a regular or ephemeral post on Channel or on DM,
+// channelID is optional: If not provided (provide userID), DM post will be sent instead.
+func (p *Plugin) sendMessageFromBot(_channelID string, userID string, isEphemeralPost bool, message string) error {
+	var channelID string = _channelID
+
+	// If its nil then get the DM channel of bot and user
+	if len(channelID) == 0 {
+		if len(userID) == 0 {
+			return errors.New("User and Channel ID both are undefined")
+		}
+
+		// Get the Bot Direct Message channel
+		directChannel, err := p.API.GetDirectChannel(userID, p.BotUserID)
+		if err != nil {
+			return err
+		}
+
+		channelID = directChannel.Id
+	}
+
 	// Construct the Post message
 	post := &model.Post{
 		UserId:    p.BotUserID,
 		ChannelId: channelID,
-		Message:   text,
+		Message:   message,
 	}
 
-	// Send the Post
-	_, err := p.API.CreatePost(post)
-	if err != nil {
-		return err
+	if isEphemeralPost == true {
+		p.API.SendEphemeralPost(userID, post)
+		return nil
 	}
 
+	p.API.CreatePost(post)
 	return nil
+
 }
 
-func (p *Plugin) sendBotPostOnDM(userID string, message string) *model.AppError {
+func (p *Plugin) createBotDMPost(userID string, message string) *model.AppError {
 	// Get the Bot Direct Message channel
 	directChannel, err := p.API.GetDirectChannel(userID, p.BotUserID)
 	if err != nil {

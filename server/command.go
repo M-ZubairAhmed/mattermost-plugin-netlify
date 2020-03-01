@@ -16,7 +16,7 @@ func getCommand() *model.Command {
 		DisplayName:      "Netlify",
 		Description:      "Integration with Netlify",
 		AutoComplete:     true,
-		AutoCompleteDesc: "Available commands: connect, disconnect, list, list id, deploy, me, help",
+		AutoCompleteDesc: "Available commands: connect, disconnect, list, list id, deploy, rollback, subscribe, me, help",
 		AutoCompleteHint: "[command]",
 	}
 }
@@ -77,6 +77,10 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	// "/netlify rollback"
 	if action == "rollback" {
 		return p.handleRollbackCommand(args)
+	}
+
+	if action == "subscribe" {
+		return p.handleSubscribeCommand(args)
 	}
 
 	// "/netlify xyz"
@@ -195,11 +199,6 @@ func (p *Plugin) handleListCommand(args *model.CommandArgs, listInDetail bool) (
 	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
 	if err != nil {
 		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Authentication failed : %v", err.Error()))
-		return &model.CommandResponse{}, nil
-	}
-
-	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Could not list Netlify sites : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -522,6 +521,91 @@ func (p *Plugin) handleRollbackCommand(args *model.CommandArgs) (*model.CommandR
 
 	// Present the user with the site dropdown
 	p.API.SendEphemeralPost(userID, rollbackCommandPost)
+
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleSubscribeCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	channelID := args.ChannelId
+	userID := args.UserId
+	actionSecret := p.getConfiguration().EncryptionKey
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+
+	// Get the Netlify library client for interacting with netlify api
+	netlifyClient, _ := p.getNetlifyClient()
+
+	// Get Netlify credentials
+	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendMessageFromBot(channelID, userID, true,
+			fmt.Sprintf("Authentication failed : %v", err.Error()),
+		)
+		return &model.CommandResponse{}, nil
+	}
+
+	// Execute list site func from netlify library
+	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Get all sites from the response payload
+	sites := listSitesResponse.GetPayload()
+
+	// If user has no netlify sites
+	if len(sites) == 0 {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		return &model.CommandResponse{}, nil
+	}
+
+	// TODO Post list of sites subscribed on the channel
+
+	// Create an empty array of options we will be using for dropdown
+	var sitesDropdownOptions []*model.PostActionOptions
+
+	// Loop over all the sites
+	for _, site := range sites {
+		siteOption := &model.PostActionOptions{
+			Text:  fmt.Sprintf("%v", site.Name),
+			Value: fmt.Sprintf("%v %v", site.ID, site.Name),
+		}
+		// Store name, id information of all the sites inside the dropdown option
+		sitesDropdownOptions = append(sitesDropdownOptions, siteOption)
+	}
+
+	// Construct a dropdown
+	sitesDropdown := &model.PostAction{
+		Type:     model.POST_ACTION_TYPE_SELECT,
+		Name:     "Select a site",
+		Disabled: false,
+		Options:  sitesDropdownOptions,
+		Integration: &model.PostActionIntegration{
+			URL: fmt.Sprintf("%s/plugins/netlify/command/subscribe", *siteURL),
+			Context: map[string]interface{}{
+				"actionSecret": actionSecret,
+			},
+		},
+	}
+
+	subscribeCommandAttachment := &model.SlackAttachment{
+		Pretext: "Subscribe to Netlify notifications",
+		Title:   "Select a site you want to subscribe build notifications for",
+		Text:    "Selecting a site will subscribe current channel for build start, success and fail notifications.\n",
+		Actions: []*model.PostAction{sitesDropdown},
+		Footer:  "If however you don't wish to subscribe, hit the (x) cross icon on the right to dismiss this message",
+	}
+
+	subscribeCommandPost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Props: map[string]interface{}{
+			"attachments": []*model.SlackAttachment{subscribeCommandAttachment},
+		},
+	}
+
+	// Present the user with the site dropdown
+	p.API.SendEphemeralPost(userID, subscribeCommandPost)
 
 	return &model.CommandResponse{}, nil
 }

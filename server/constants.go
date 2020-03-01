@@ -11,8 +11,12 @@ const (
 	NetlifyAPIPlumbingLibraryClientKey ctxKey = 2 + iota
 )
 
-// NetlifyAuthTokenKVIdentifier is used to in suffix with userID to identify key in KV store
-const NetlifyAuthTokenKVIdentifier string = "_netlifyToken"
+// KV identifiers
+const (
+	// NetlifyAuthTokenKVIdentifier is used to in suffix with userID to identify key in KV store
+	NetlifyAuthTokenKVIdentifier            string = "_netlifyToken"
+	NetlifyWebhookSubscriptionsKVIdentifier string = "_webhook"
+)
 
 // Netlify specific constants
 const (
@@ -99,9 +103,9 @@ const (
 
 // Information of state inside of incoming webhook55
 const (
-	NetlifyEventStateDeployCreated  = "ready"
-	NetlifyEventStateDeployBuilding = "building"
-	NetlifyEventStateDeployFailed   = "error"
+	NetlifyEventStateDeployCreated  string = "ready"
+	NetlifyEventStateDeployBuilding string = "building"
+	NetlifyEventStateDeployFailed   string = "error"
 )
 
 // Types of Netlify Hooks

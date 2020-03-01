@@ -53,6 +53,11 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	if route == "/command/rollback" {
 		p.handleRollbackBuildSelectResponse(w, r)
 	}
+
+	// When user selects a site for subscribing notifications
+	if route == "/command/subscribe" {
+		p.handleSiteSelectionForSubscribeCommand(w, r)
+	}
 }
 
 func (p *Plugin) getOAuthConfig() *oauth2.Config {
@@ -165,7 +170,7 @@ func (p *Plugin) handleAuthRedirectFromNetlify(w http.ResponseWriter, r *http.Re
 	}
 
 	// Send a welcome message via Bot
-	p.sendBotPostOnDM(authUserID, SuccessfullyNetlifyConnectedMessage)
+	p.createBotDMPost(authUserID, SuccessfullyNetlifyConnectedMessage)
 
 	// Get the plugin file path
 	bundlePath, bundleErr := p.API.GetBundlePath()
@@ -446,7 +451,7 @@ func (p *Plugin) handleDeployCommandResponse(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	p.createBotPost(channelID, fmt.Sprintf(
+	p.sendMessageFromBot(channelID, "", false, fmt.Sprintf(
 		":satellite: Mattermost Netlify Bot has successfully asked Netlify to deploy **%v** branch of **%v** site.\n"+
 			"If you have configured notifications, you should be seeing one soon.", siteBranch, siteName))
 }
@@ -609,7 +614,7 @@ func (p *Plugin) handleRollbackCommandResponse(w http.ResponseWriter, r *http.Re
 	}
 
 	// Post a message with detail info of top 5 builds
-	p.createBotPost(channelID, fmt.Sprintf(":chains: List of latest 5 releases of **%v** Netlify site\n%v", siteName, deployMarkdownTable))
+	p.sendMessageFromBot(channelID, "", false, fmt.Sprintf(":chains: List of latest 5 releases of **%v** Netlify site\n%v", siteName, deployMarkdownTable))
 
 	// Construct a dropdown
 	sitesDeployListDropdown := &model.PostAction{
