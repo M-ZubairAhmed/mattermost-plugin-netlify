@@ -35,7 +35,7 @@
 ## Installation
 Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section. For more help on how to install a custom plugin refers [installing custom plugin docs](https://docs.mattermost.com/administration/plugins.html#custom-plugins).
 
-*Currently unstable due to active development, should be used for testing purpose only*.
+*Currently unstable due to active development, should be used for testing purpose only, [Open](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/issues/new) for bugs and improvements*.
 
 ## Setting up
 
