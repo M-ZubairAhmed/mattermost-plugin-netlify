@@ -20,6 +20,9 @@
       + [List IDs](#list-id-command)
       + [Deploy](#deploy-command)
       + [Rollback](#rollback-command)
+      + [Subscribe](#subscribe-command)
+      + [Unsubscribe](#unsubscribe-command)
+      + [Subscriptions](#subscriptions-command)
 - [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
    * [Repository submission](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/blob/master/hackathon-submissions/m-zubairahmed-mattermost-plugin-netlify.md)
@@ -100,6 +103,8 @@ This commands show revelant information of the Netlify account connected to Matt
 
 It shows all the commands which are available for user to interact with Netlify bot.
 
+![help-gif](https://user-images.githubusercontent.com/17708702/75640824-31160880-5c2e-11ea-83dd-8ee94311a92a.gif)
+
 ### List command
 `/netlify list`
 
@@ -127,3 +132,37 @@ It triggers a new build on your site. At a time only one site can be built. Site
 It can facilitate to quick rollback to a previous stable state of the website. The latest five releases are shown for a particular site to roll back the site to. Since this is not a deploy, notification are not enabled for this operation. But the site itself it rolled back internally and can be verified by checking the site url itself.
 
 ![rollback-gif](https://user-images.githubusercontent.com/17708702/75423266-46411d80-5936-11ea-87c1-533e11d56dae.gif)
+
+### Subscribe command
+`/netlify subscribe`
+
+![subscribe](https://user-images.githubusercontent.com/17708702/75640849-3ecb8e00-5c2e-11ea-9641-4edff08c27da.gif)
+
+### Unsubscribe command
+`/netlify unsubscribe`
+
+![unsubscribe](https://user-images.githubusercontent.com/17708702/75640944-910caf00-5c2e-11ea-9a51-035eb1e86119.gif)
+
+
+### Subscriptions command
+`/netlify subscriptions`
+
+![unsubscribe](https://user-images.githubusercontent.com/17708702/75641008-c4e7d480-5c2e-11ea-8148-f88726f7a10b.gif)
+
+### Notifications
+This plugin comes with beautiful, slick and condensed notifications for your Netlify sites. Which when subscribed can show information regarding your builds.
+
+### Build started
+When enabled, this notifications pops up in your channel as soon as a new deploy is in progress for one of your sites.
+
+![st](https://user-images.githubusercontent.com/17708702/75641335-d54c7f00-5c2f-11ea-9b41-6746cf9f0139.png)
+
+### Build successfull
+When enabled, this notification informs you that the build has successfully completed for one of your site. It also gives an SSL enabled preview url of the new build along with build logs.
+
+![co](https://user-images.githubusercontent.com/17708702/75641385-02009680-5c30-11ea-81fb-8fce1bc15ab8.png)
+
+### Build failed
+When enabled, this notification alerts you that the build has terminated without result. It shows the top build failure reason along with complete failure build logs.
+
+![fail](https://user-images.githubusercontent.com/17708702/75641297-b0580c00-5c2f-11ea-90b3-b37842567765.png)
