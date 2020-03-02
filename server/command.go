@@ -88,6 +88,10 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		return p.handleUnsubscribeCommand(args)
 	}
 
+	if action == "subscriptions" {
+		return p.handleSubscriptionsCommand(args)
+	}
+
 	// "/netlify xyz"
 	return p.handleUnknownCommand(c, args, action)
 
@@ -130,7 +134,7 @@ func (p *Plugin) handleConnectCommand(c *plugin.Context, args *model.CommandArgs
 }
 
 func (p *Plugin) handleHelpCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Help"))
+	p.sendMessageFromBot(args.ChannelId, "", false, "#### Netlify commands with description:\n"+HelpPost)
 	return &model.CommandResponse{}, nil
 }
 
@@ -666,6 +670,81 @@ func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.Comma
 		ChannelId: channelID,
 		Message: fmt.Sprintf(
 			":no_bell:  Successfully unsubscribed this channel for build notifications from all your netlify sites.\n"),
+	})
+
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	channelID := args.ChannelId
+	userID := args.UserId
+
+	// Get the Netlify library client for interacting with netlify api
+	netlifyClient, _ := p.getNetlifyClient()
+
+	// Get Netlify credentials
+	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendMessageFromBot(channelID, userID, true,
+			fmt.Sprintf("Authentication failed : %v", err.Error()),
+		)
+		return &model.CommandResponse{}, nil
+	}
+
+	// Execute list site func from netlify library
+	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
+	if err != nil {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Get all sites from the response payload
+	sites := listSitesResponse.GetPayload()
+
+	// If user has no netlify sites
+	if len(sites) == 0 {
+		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		return &model.CommandResponse{}, nil
+	}
+
+	postMessageForSubscriptions := "### List of subscriptions of your Netlify sites with channels\n"
+
+	for _, site := range sites {
+		channelsSubscribed, err := p.getWebhookSubscriptionForSite(site.ID)
+		if err != nil {
+			p.API.SendEphemeralPost(userID, &model.Post{
+				UserId:    p.BotUserID,
+				ChannelId: channelID,
+				Message: fmt.Sprintf(
+					":exclamation: Could not get subscriptions for channels with %v site\n"+
+						"*Error : %v*", site.Name, err.Error()),
+			})
+			return nil, &model.AppError{Message: err.Error()}
+		}
+		if len(channelsSubscribed) != 0 {
+			var siteSubscriptionBlock string = fmt.Sprintf("#### %v :\n", site.Name)
+			for _, channelSubscribed := range channelsSubscribed {
+				channel, err := p.API.GetChannel(channelSubscribed)
+				if err != nil {
+					p.API.SendEphemeralPost(userID, &model.Post{
+						UserId:    p.BotUserID,
+						ChannelId: channelID,
+						Message: fmt.Sprintf(
+							":exclamation: Could not get subscriptions for channels with %v site\n"+
+								"*Error : %v*", site.Name, err.Error()),
+					})
+					return nil, &model.AppError{Message: err.Error()}
+				}
+				siteSubscriptionBlock = siteSubscriptionBlock + fmt.Sprintf("- %v\n", channel.Name)
+			}
+			postMessageForSubscriptions = postMessageForSubscriptions + siteSubscriptionBlock
+		}
+	}
+
+	p.API.CreatePost(&model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Message:   postMessageForSubscriptions,
 	})
 
 	return &model.CommandResponse{}, nil

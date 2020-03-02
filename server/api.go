@@ -170,7 +170,7 @@ func (p *Plugin) handleAuthRedirectFromNetlify(w http.ResponseWriter, r *http.Re
 	}
 
 	// Send a welcome message via Bot
-	p.createBotDMPost(authUserID, SuccessfullyNetlifyConnectedMessage)
+	p.createBotDMPost(authUserID, SuccessfullyNetlifyConnectedMessage+HelpPost)
 
 	// Get the plugin file path
 	bundlePath, bundleErr := p.API.GetBundlePath()

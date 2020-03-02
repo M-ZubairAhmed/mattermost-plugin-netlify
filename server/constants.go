@@ -46,10 +46,10 @@ const (
 )
 
 // SuccessfullyNetlifyConnectedMessage is posted when /connect command is executed and completed
-const SuccessfullyNetlifyConnectedMessage string = "#### Welcome to the Mattermost Netlify Plugin!\n" +
-	"You've successfully connected your Mattermost account on Netlify.\n\n" +
+const SuccessfullyNetlifyConnectedMessage string = "#### Mattermost Netlify Plugin is now connected\n" +
+	"You've successfully connected your Netlify account on Mattermost. To see more details about the account you can run `/netlify me`. For any other help run `/netlify help`\n\n" +
 	"##### Notifications\n" +
-	"Write about how to enable notifications.\n" +
+	"You can run `/netlify subscribe` on any channel where you would like to receive build notifications for your Netlify site. To view all subscriptions for notification run `/netlify subscriptions`\n" +
 	"##### Slash Commands\n"
 
 const (
@@ -120,3 +120,19 @@ const (
 	NetlifyEventTypeHeader = "X-Netlify-Event"
 	NetlifyJWSHeader       = "X-Webhook-Signature"
 )
+
+// HelpPost is string with all commands description
+const HelpPost = `
+* /netlify **connect** - Connect your Mattermost account to your Netlify account. For any of the below commands, this command should be run first.
+* /netlify **disconnect** - Disconnect your Mattermost account from your Netlify account All notifications are also unsubscribed from all channels.
+* /netlify **me** - This commands show revelant information of the Netlify account connected to Mattermost.
+* /netlify **help** - Shows help with plugin commands and features.
+* /netlify **list** - It tabulates all the sites information of Netlify account. It lists name, url, custom domain, repository, deployed branch, managed by team, last updated of the site.
+* /netlify **list id** - This is usually a precursor command which you will be using to obtain site ids of you netlify hosted sites. It tabulates your sites along with its ids.
+* /netlify **deploy** - Triggers a rebuild or build for your Netlify site.
+* /netlify **rollback** - Facilitate to quick rollback to a previous stable state of your Netlify site.
+* /netlify **subscribe** - Subscribes the channel to receive build notifications of your Netlify site(s).
+* /netlify **unsubscribe** - Unsubscribes the channel from build notifications from all of your Netlify site(s).
+* /netlify **subscriptions** - Lists out all the channels subscribed along with Netlify sites.
+* /netlify **site** - Shows in-depth  information of your Netlify site.
+`
