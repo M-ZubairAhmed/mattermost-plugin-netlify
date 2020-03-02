@@ -31,6 +31,7 @@
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
    * [Repository submission](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/blob/master/hackathon-submissions/m-zubairahmed-mattermost-plugin-netlify.md)
    * [Pull request link](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/pull/3)
+   * [Plugin walkthrough video](https://youtu.be/SMEpQZV5_08)
 - [Development](#development)
 - [Roadmap](#road-map)
 
