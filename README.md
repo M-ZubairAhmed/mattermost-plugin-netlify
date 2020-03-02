@@ -23,7 +23,7 @@
       + [Subscribe](#subscribe-command)
       + [Unsubscribe](#unsubscribe-command)
       + [Subscriptions](#subscriptions-command)
-   * [Notifications commands](#notifications)
+   * [Notifications](#notifications)
       + [Build starting notification](#build-started)
       + [Build successfull notification](#build-successfull)
       + [Build failed notification](#build-failed)
@@ -140,16 +140,21 @@ It can facilitate to quick rollback to a previous stable state of the website. T
 ### Subscribe command
 `/netlify subscribe`
 
+It subscribes sites to post build notifications on the channel from where the command was executed.
+
 ![subscribe](https://user-images.githubusercontent.com/17708702/75640849-3ecb8e00-5c2e-11ea-9641-4edff08c27da.gif)
 
 ### Unsubscribe command
 `/netlify unsubscribe`
 
-![unsubscribe](https://user-images.githubusercontent.com/17708702/75640944-910caf00-5c2e-11ea-9a51-035eb1e86119.gif)
+It unsubscribes the channel from where command was executed from all Netlify sites build notifications.
 
+![unsubscribe](https://user-images.githubusercontent.com/17708702/75640944-910caf00-5c2e-11ea-9a51-035eb1e86119.gif)
 
 ### Subscriptions command
 `/netlify subscriptions`
+
+Lists all the subscriptions along with channel and sites currently subscribed on Mattermost to recieve build notifications.
 
 ![subscribess](https://user-images.githubusercontent.com/17708702/75641517-6ae80e80-5c30-11ea-9d8a-855d02e2143f.gif)
 
