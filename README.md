@@ -31,6 +31,7 @@
    * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
    * [Repository submission](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/blob/master/hackathon-submissions/m-zubairahmed-mattermost-plugin-netlify.md)
    * [Pull request link](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/pull/3)
+- [Development](#development)
 
 ## Installation
 Please download the latest version of the [release](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/releases) directory. Headover to `System Console` and drop the latest release in plugins section. For more help on how to install a custom plugin refers [installing custom plugin docs](https://docs.mattermost.com/administration/plugins.html#custom-plugins).
@@ -175,3 +176,15 @@ When enabled, this notification informs you that the build has successfully comp
 When enabled, this notification alerts you that the build has terminated without result. It shows the top build failure reason along with complete failure build logs.
 
 ![fail](https://user-images.githubusercontent.com/17708702/75641297-b0580c00-5c2f-11ea-90b3-b37842567765.png)
+
+## Development
+This plugin contains only a server portion. Webapp portion at this time is not needed. But feel free to include that if need arises.
+
+- To bundle plugin
+```bash
+make dist
+```
+- To check for styles
+```bash
+make check-style
+```
