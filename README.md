@@ -147,7 +147,7 @@ It can facilitate to quick rollback to a previous stable state of the website. T
 ### Subscriptions command
 `/netlify subscriptions`
 
-![unsubscribe](https://user-images.githubusercontent.com/17708702/75641008-c4e7d480-5c2e-11ea-8148-f88726f7a10b.gif)
+![subscribess](https://user-images.githubusercontent.com/17708702/75641517-6ae80e80-5c30-11ea-9d8a-855d02e2143f.gif)
 
 ### Notifications
 This plugin comes with beautiful, slick and condensed notifications for your Netlify sites. Which when subscribed can show information regarding your builds.
