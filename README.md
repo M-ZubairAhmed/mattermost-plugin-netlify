@@ -191,7 +191,7 @@ make check-style
 ```
 
 ### Road map
-- [] Tighen security along the lines of encypted keys
-- [] Add support for DNS configuration
-- [] Add support for Forms control
-- [] Include notifications for Forms submissions
+- [ ] Tighen security along the lines of encypted keys
+- [ ] Add support for DNS configuration
+- [ ] Add support for Forms control
+- [ ] Include notifications for Forms submissions
