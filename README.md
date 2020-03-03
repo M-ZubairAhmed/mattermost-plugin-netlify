@@ -4,6 +4,8 @@
   <h5 align="center"><i>A two way integration plugin between Mattermost and Netlify.</i></h5>
 </p>
 
+> [Plugin walkthrough video](https://youtu.be/SMEpQZV5_08) for [Mattermost-Bot-Hackfest](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
+
 ## Table of content
 - [Installation](#installation)
 - [Setting up](#setting-up)
@@ -27,11 +29,6 @@
       + [Build starting notification](#build-started)
       + [Build successfull notification](#build-successfull)
       + [Build failed notification](#build-failed)
-- [Hackathon](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
-   * [Ideation draft](https://github.com/M-ZubairAhmed/mattermost-plugin-netlify/blob/master/proposal.md)
-   * [Repository submission](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/blob/master/hackathon-submissions/m-zubairahmed-mattermost-plugin-netlify.md)
-   * [Pull request link](https://github.com/mattermost/mattermost-hackathon-hackerearth-jan2020/pull/3)
-   * [Plugin walkthrough video](https://youtu.be/SMEpQZV5_08)
 - [Development](#development)
 - [Roadmap](#road-map)
 
