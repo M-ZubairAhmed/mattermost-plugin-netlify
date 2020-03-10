@@ -397,7 +397,7 @@ func (p *Plugin) handleSiteSelectionForSubscribeCommand(w http.ResponseWriter, r
 	}
 
 	if isMMHookForBuildCompletePresent == true && isMMHookForBuildFailPresent == true && isMMHookForBuildStartPresent == true {
-		err = p.setWebhookSubscriptionsForSite(channelIDToSubscribe, siteIDToSubscribe)
+		err = p.setWebhookSubscriptionsForSite(siteIDToSubscribe, channelIDToSubscribe)
 		if err != nil {
 			p.API.SendEphemeralPost(userID, &model.Post{
 				UserId:    p.BotUserID,
