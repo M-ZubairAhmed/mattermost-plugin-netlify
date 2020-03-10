@@ -36,7 +36,7 @@ const manifestStr = `
         "key": "NetlifyOAuthAppName",
         "display_name": "Netlify Application Name",
         "type": "text",
-        "help_text": "The name given to the your OAuth application in Netlify, Please remember to add the Redirect URL in Netlify application as : \u003csiteURL\u003e/plugins/netlify/oauth/redirect",
+        "help_text": "The name given to the your OAuth application in Netlify, Please remember to add the Redirect URL in Netlify application as : \u003csiteURL\u003e/plugins/netlify/auth/redirect",
         "placeholder": "Please copy the same application name in Netlify OAuth app",
         "default": "Mattermost-Netlify-Bot"
       },
