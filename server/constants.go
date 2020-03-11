@@ -101,7 +101,7 @@ const (
 	NetlifyEventDeployRequestRejected = "deploy_request_rejected"
 )
 
-// Information of state inside of incoming webhook55
+// Information of state inside of incoming webhook
 const (
 	NetlifyEventStateDeployCreated  string = "ready"
 	NetlifyEventStateDeployBuilding string = "building"

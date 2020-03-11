@@ -45,7 +45,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	// Before executing any of below commands check if user account is connected
 	accessToken, err := p.getNetlifyUserAccessTokenFromStore(args.UserId)
 	if err != nil || len(accessToken) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You must connect your Netlify account first.\nPlease run `/netlify connect`"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You must connect your Netlify account first.\nPlease run `/netlify connect`"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -123,12 +123,12 @@ func (p *Plugin) handleConnectCommand(c *plugin.Context, args *model.CommandArgs
 	// Check if SiteURL is defined in the app
 	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
 	if siteURL == nil {
-		p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, "Error! Site URL is not defined in the App")
 		return &model.CommandResponse{}, nil
 	}
 
 	// Send an ephemeral post with the link to connect netlify
-	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("[Click here to connect your Netlify account with Mattermost.](%s/plugins/netlify/auth/connect)", *siteURL))
+	p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("[Click here to connect your Netlify account with Mattermost.](%s/plugins/netlify/auth/connect)", *siteURL))
 
 	return &model.CommandResponse{}, nil
 }
@@ -139,7 +139,7 @@ func (p *Plugin) handleHelpCommand(c *plugin.Context, args *model.CommandArgs) (
 }
 
 func (p *Plugin) handleUnknownCommand(c *plugin.Context, args *model.CommandArgs, action string) (*model.CommandResponse, *model.AppError) {
-	p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Unknown command `/netlify %v`\nTo see list of commands type `/netlify help`", action))
+	p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Unknown command `/netlify %v`\nTo see list of commands type `/netlify help`", action))
 	return &model.CommandResponse{}, nil
 }
 
@@ -147,7 +147,7 @@ func (p *Plugin) handleDisconnectCommand(c *plugin.Context, args *model.CommandA
 	// Check if SiteURL is defined in the app
 	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
 	if siteURL == nil {
-		p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, "Error! Site URL is not defined in the App")
 		return &model.CommandResponse{}, nil
 	}
 
@@ -207,14 +207,14 @@ func (p *Plugin) handleListCommand(args *model.CommandArgs, listInDetail bool) (
 	// Get Netlify credentials
 	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Authentication failed : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Authentication failed : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
 	// Execute list site func from netlify library
 	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -223,7 +223,7 @@ func (p *Plugin) handleListCommand(args *model.CommandArgs, listInDetail bool) (
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -286,7 +286,8 @@ func (p *Plugin) handleListCommand(args *model.CommandArgs, listInDetail bool) (
 		markdownTable = fmt.Sprintf("%v\n%v", markdownTable, tableRow)
 	}
 
-	p.sendBotPostOnChannel(args, markdownTable)
+	// Send a regular message in the channel from BOT
+	p.sendMessageFromBot(args.ChannelId, "", false, markdownTable)
 
 	return &model.CommandResponse{}, nil
 }
@@ -300,14 +301,14 @@ func (p *Plugin) handleMeCommand(args *model.CommandArgs) (*model.CommandRespons
 	// Get Netlify credentials
 	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Authentication failed : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Authentication failed : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
 	// Execute netlify api to get account details
 	currentUserResponse, err := netlifyClient.Operations.GetAccount(nil, netlifyCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to get current user: %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to get current user: %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -343,7 +344,8 @@ func (p *Plugin) handleMeCommand(args *model.CommandArgs) (*model.CommandRespons
 		currentUser.Name, currentUser.BillingEmail, currentUser.Type, currentUser.TypeName,
 		currentUser.ID, strings.Join(currentUser.RolesAllowed, " "), userCreatedDate, userUpdatedDate)
 
-	p.sendBotPostOnChannel(args, currentUserMessage)
+	// Send a message on channel by BOT
+	p.sendMessageFromBot(args.ChannelId, "", false, currentUserMessage)
 
 	return &model.CommandResponse{}, nil
 }
@@ -355,7 +357,7 @@ func (p *Plugin) handleDeployCommand(args *model.CommandArgs) (*model.CommandRes
 	// Check if SiteURL is defined in the app
 	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
 	if siteURL == nil {
-		p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, "Error! Site URL is not defined in the App")
 		return &model.CommandResponse{}, nil
 	}
 
@@ -370,7 +372,7 @@ func (p *Plugin) handleDeployCommand(args *model.CommandArgs) (*model.CommandRes
 
 	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(
 			":exclamation: Authentication failed\n"+
 				"*Error : %v*", err.Error()))
 		return &model.CommandResponse{}, nil
@@ -381,7 +383,7 @@ func (p *Plugin) handleDeployCommand(args *model.CommandArgs) (*model.CommandRes
 	// Execute list site func from netlify library
 	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyClientCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -389,7 +391,7 @@ func (p *Plugin) handleDeployCommand(args *model.CommandArgs) (*model.CommandRes
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -448,7 +450,7 @@ func (p *Plugin) handleRollbackCommand(args *model.CommandArgs) (*model.CommandR
 	// Check if SiteURL is defined in the app
 	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
 	if siteURL == nil {
-		p.sendBotEphemeralPostWithMessage(args, "Error! Site URL is not defined in the App")
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, "Error! Site URL is not defined in the App")
 		return &model.CommandResponse{}, nil
 	}
 
@@ -463,7 +465,7 @@ func (p *Plugin) handleRollbackCommand(args *model.CommandArgs) (*model.CommandR
 
 	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(
 			":exclamation: Authentication failed\n"+
 				"*Error : %v*", err.Error()))
 		return &model.CommandResponse{}, nil
@@ -474,7 +476,7 @@ func (p *Plugin) handleRollbackCommand(args *model.CommandArgs) (*model.CommandR
 	// Execute list site func from netlify library
 	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyClientCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -482,7 +484,7 @@ func (p *Plugin) handleRollbackCommand(args *model.CommandArgs) (*model.CommandR
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -555,7 +557,7 @@ func (p *Plugin) handleSubscribeCommand(args *model.CommandArgs) (*model.Command
 	// Execute list site func from netlify library
 	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -564,7 +566,7 @@ func (p *Plugin) handleSubscribeCommand(args *model.CommandArgs) (*model.Command
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -636,7 +638,7 @@ func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.Comma
 	// Execute list site func from netlify library
 	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -645,7 +647,7 @@ func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.Comma
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -694,7 +696,7 @@ func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.Com
 	// Execute list site func from netlify library
 	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
 	if err != nil {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -703,7 +705,7 @@ func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.Com
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendBotEphemeralPostWithMessage(args, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 

@@ -169,8 +169,8 @@ func (p *Plugin) handleAuthRedirectFromNetlify(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Send a welcome message via Bot
-	p.createBotDMPost(authUserID, SuccessfullyNetlifyConnectedMessage+HelpPost)
+	// Send a welcome message via Bot on DM
+	p.sendMessageFromBot("", authUserID, false, SuccessfullyNetlifyConnectedMessage+HelpPost)
 
 	// Get the plugin file path
 	bundlePath, bundleErr := p.API.GetBundlePath()
@@ -223,7 +223,7 @@ func (p *Plugin) handleDisconnectCommandResponse(w http.ResponseWriter, r *http.
 		err := p.API.KVDelete(accessTokenIdentifier)
 		if err != nil {
 			p.API.DeleteEphemeralPost(userID, originalPostID)
-			p.sendBotEphemeralPostWithMessageInChannel(channelID, userID, fmt.Sprintf("Couldn't disconnect to Netlify services : %v", err.Error()))
+			p.sendMessageFromBot(channelID, userID, true, fmt.Sprintf("Couldn't disconnect to Netlify services : %v", err.Error()))
 			return
 		}
 
