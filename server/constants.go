@@ -129,16 +129,16 @@ const (
 const HelpPost string = `
 * /netlify **connect** - Connect your Mattermost account to your Netlify account. For any of the below commands, this command should be run first.
 * /netlify **disconnect** - Disconnect your Mattermost account from your Netlify account All notifications are also unsubscribed from all channels.
-* /netlify **me** - This commands show revelant information of the Netlify account connected to Mattermost.
-* /netlify **help** - Shows help with plugin commands and features.
 * /netlify **list** - It tabulates all the sites information of Netlify account. It lists name, url, custom domain, repository, deployed branch, managed by team, last updated of the site.
 * /netlify **list id** - This is usually a precursor command which you will be using to obtain site ids of you netlify hosted sites. It tabulates your sites along with its ids.
 * /netlify **deploy** - Triggers a rebuild or build for your Netlify site.
 * /netlify **rollback** - Facilitate to quick rollback to a previous stable state of your Netlify site.
-* /netlify **subscribe** - Subscribes the channel to receive build notifications of your Netlify site(s).
+* /netlify **subscribe** - Subscribes the channel to receive build notifications from your Netlify site(s).
 * /netlify **unsubscribe** - Unsubscribes the channel from build notifications from all of your Netlify site(s).
-* /netlify **subscriptions** - Lists out all the channels subscribed along with Netlify sites.
-* /netlify **site** - Shows in-depth  information of your Netlify site.
+* /netlify **subscriptions** - Lists out all your Netlify site(s) subscribed with the channel.
+* /netlify **site** - Shows in-depth information of your Netlify site.
+* /netlify **me** - This commands show revelant information of the Netlify account connected to Mattermost.
+* /netlify **help** - Shows help with plugin commands and features.
 `
 
 // Ref : https://github.com/mattermost/mattermost-server/blob/v5.20.1/model/channel.go
