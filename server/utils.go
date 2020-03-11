@@ -152,3 +152,16 @@ func truncateString(s string, i int) string {
 	}
 	return s + "..."
 }
+
+func (p *Plugin) isCommandRunFromValidChannel(channelID string) bool {
+	channel, err := p.API.GetChannel(channelID)
+	if err != nil {
+		return false
+	}
+
+	if channel.Type == MattermostChannelDM || channel.Type == MattermostChannelGroup {
+		return false
+	}
+
+	return true
+}

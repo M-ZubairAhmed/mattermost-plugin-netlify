@@ -542,6 +542,14 @@ func (p *Plugin) handleSubscribeCommand(args *model.CommandArgs) (*model.Command
 	actionSecret := p.getConfiguration().EncryptionKey
 	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
 
+	// This command can only be run in a public and private channel
+	if p.isCommandRunFromValidChannel(channelID) == false {
+		p.sendMessageFromBot(channelID, userID, true,
+			fmt.Sprintf("This command can only be run in a private or public channel"),
+		)
+		return &model.CommandResponse{}, nil
+	}
+
 	// Get the Netlify library client for interacting with netlify api
 	netlifyClient, _ := p.getNetlifyClient()
 
@@ -623,6 +631,14 @@ func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.Comma
 	channelID := args.ChannelId
 	userID := args.UserId
 
+	// This command can only be run in a public and private channel
+	if p.isCommandRunFromValidChannel(channelID) == false {
+		p.sendMessageFromBot(channelID, userID, true,
+			fmt.Sprintf("This command can only be run in a private or public channel"),
+		)
+		return &model.CommandResponse{}, nil
+	}
+
 	// Get the Netlify library client for interacting with netlify api
 	netlifyClient, _ := p.getNetlifyClient()
 
@@ -680,6 +696,14 @@ func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.Comma
 func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	channelID := args.ChannelId
 	userID := args.UserId
+
+	// This command can only be run in a public and private channel
+	if p.isCommandRunFromValidChannel(channelID) == false {
+		p.sendMessageFromBot(channelID, userID, true,
+			fmt.Sprintf("This command can only be run in a private or public channel"),
+		)
+		return &model.CommandResponse{}, nil
+	}
 
 	// Get the Netlify library client for interacting with netlify api
 	netlifyClient, _ := p.getNetlifyClient()
