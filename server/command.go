@@ -223,7 +223,7 @@ func (p *Plugin) handleListCommand(args *model.CommandArgs, listInDetail bool) (
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":spider_web: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -391,7 +391,7 @@ func (p *Plugin) handleDeployCommand(args *model.CommandArgs) (*model.CommandRes
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":spider_web: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -484,7 +484,7 @@ func (p *Plugin) handleRollbackCommand(args *model.CommandArgs) (*model.CommandR
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":white_flag: You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":spider_web: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -574,7 +574,7 @@ func (p *Plugin) handleSubscribeCommand(args *model.CommandArgs) (*model.Command
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":spider_web: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -663,7 +663,7 @@ func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.Comma
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":spider_web: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
@@ -693,6 +693,12 @@ func (p *Plugin) handleUnsubscribeCommand(args *model.CommandArgs) (*model.Comma
 	return &model.CommandResponse{}, nil
 }
 
+type SiteSubscribed struct {
+	ID   string
+	Name string
+	URL  string
+}
+
 func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	channelID := args.ChannelId
 	userID := args.UserId
@@ -717,6 +723,9 @@ func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.Com
 		return &model.CommandResponse{}, nil
 	}
 
+	// Show message stating that we are working on it
+	p.sendMessageFromBot(channelID, userID, true, ":hourglass_flowing_sand: Please wait while we retrieve all sites subscribed to this channel")
+
 	// Execute list site func from netlify library
 	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
 	if err != nil {
@@ -729,49 +738,61 @@ func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.Com
 
 	// If user has no netlify sites
 	if len(sites) == 0 {
-		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("You don't seem to have any Netlify sites"))
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":spider_web: You don't seem to have any Netlify sites"))
 		return &model.CommandResponse{}, nil
 	}
 
-	postMessageForSubscriptions := "### List of subscriptions of your Netlify sites with channels\n"
+	var sitesSubscribedForCurrentChannel []SiteSubscribed
 
 	for _, site := range sites {
-		channelsSubscribed, err := p.getWebhookSubscriptionForSite(site.ID)
+		// Get all the channels a site is subscribed to
+		channelsSubscribedForSite, err := p.getWebhookSubscriptionForSite(site.ID)
 		if err != nil {
 			p.API.SendEphemeralPost(userID, &model.Post{
 				UserId:    p.BotUserID,
 				ChannelId: channelID,
 				Message: fmt.Sprintf(
-					":exclamation: Could not get subscriptions for channels with %v site\n"+
+					":exclamation: Could not get subscriptions for current channel with %v site\n"+
 						"*Error : %v*", site.Name, err.Error()),
 			})
 			return nil, &model.AppError{Message: err.Error()}
 		}
-		if len(channelsSubscribed) != 0 {
-			var siteSubscriptionBlock string = fmt.Sprintf("#### %v :\n", site.Name)
-			for _, channelSubscribed := range channelsSubscribed {
-				channel, err := p.API.GetChannel(channelSubscribed)
-				if err != nil {
-					p.API.SendEphemeralPost(userID, &model.Post{
-						UserId:    p.BotUserID,
-						ChannelId: channelID,
-						Message: fmt.Sprintf(
-							":exclamation: Could not get subscriptions for channels with %v site\n"+
-								"*Error : %v*", site.Name, err.Error()),
-					})
-					return nil, &model.AppError{Message: err.Error()}
+
+		// If there is at least a channel a site is subscribed to
+		if len(channelsSubscribedForSite) != 0 {
+			// Loop over all channels for a particular site subscription
+			for _, channelSubscribed := range channelsSubscribedForSite {
+				// Check if current channel id exists in the list of subscription of the site
+				if channelSubscribed == channelID {
+					sitesSubscribedForCurrentChannel = append(sitesSubscribedForCurrentChannel,
+						SiteSubscribed{
+							ID:   site.ID,
+							Name: site.Name,
+							URL:  site.URL})
+					break
 				}
-				siteSubscriptionBlock = siteSubscriptionBlock + fmt.Sprintf("- %v\n", channel.Name)
 			}
-			postMessageForSubscriptions = postMessageForSubscriptions + siteSubscriptionBlock
 		}
 	}
 
-	p.API.CreatePost(&model.Post{
-		UserId:    p.BotUserID,
-		ChannelId: channelID,
-		Message:   postMessageForSubscriptions,
-	})
+	var postMessageForSubscriptions string = `#### List of Netlify site(s) subscribed to the current channel to receive build notifications`
+
+	if len(sitesSubscribedForCurrentChannel) == 0 {
+		postMessageForSubscriptions = fmt.Sprintf(":spider_web: There no site build notifications subscribed to the current channel")
+	} else {
+		markdownSubscriptionTable := MarkdownSubscriptionTableHeader
+
+		// Build a table of subscriptions
+		for _, siteSubscribed := range sitesSubscribedForCurrentChannel {
+			var markdownSubscriptionTableRow string = fmt.Sprintf("| %v | %v | :bell: Subscribed |",
+				siteSubscribed.Name, siteSubscribed.URL)
+			markdownSubscriptionTable = fmt.Sprintf("%v\n%v", markdownSubscriptionTable, markdownSubscriptionTableRow)
+		}
+
+		postMessageForSubscriptions = postMessageForSubscriptions + markdownSubscriptionTable
+	}
+
+	p.sendMessageFromBot(channelID, "", false, postMessageForSubscriptions)
 
 	return &model.CommandResponse{}, nil
 }

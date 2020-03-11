@@ -62,6 +62,10 @@ const (
 	MarkdownDeployListTableHeader string = `
 | Sequence |   SHA  | Deployed at |  Deploy ID  |
 |:--------:|:-------|------------:|-------------|`
+
+	MarkdownSubscriptionTableHeader string = `
+| Site | URL | Status |
+|------|:---:|--------|`
 )
 
 // MarkdownSiteListDetailTableHeader is a table rendered in markdown for list detail command
