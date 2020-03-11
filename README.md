@@ -154,9 +154,9 @@ It unsubscribes the channel from where command was executed from all Netlify sit
 ### Subscriptions command
 `/netlify subscriptions`
 
-Lists all the subscriptions along with channel and sites currently subscribed on Mattermost to recieve build notifications.
+Lists out all your Netlify site(s) subscribed with the channel to receive build notifications.
 
-![subscribess](https://user-images.githubusercontent.com/17708702/75641517-6ae80e80-5c30-11ea-9d8a-855d02e2143f.gif)
+![subscribes](https://user-images.githubusercontent.com/17708702/76461068-159dc100-63d7-11ea-944a-9afaf314981d.gif)
 
 ### Notifications
 This plugin comes with beautiful, slick and condensed notifications for your Netlify sites. Which when subscribed can show information regarding your builds.

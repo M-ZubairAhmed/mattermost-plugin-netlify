@@ -413,7 +413,7 @@ func (p *Plugin) handleSiteSelectionForSubscribeCommand(w http.ResponseWriter, r
 			UserId:    p.BotUserID,
 			ChannelId: channelIDToSubscribe,
 			Message: fmt.Sprintf(
-				":star2:  Successfully subscribed **%v** for build notifications from **%v** site.\n",
+				":bell:  Successfully subscribed **%v** for build notifications from **%v** site.\n",
 				channelNameToSubscribe, siteNameToSubscribe),
 		})
 	}
@@ -462,6 +462,7 @@ func (p *Plugin) setWebhookSubscriptionsForSite(siteID, channelID string) error 
 	return nil
 }
 
+// getWebhookSubscriptionForSite function returns list of channels a site is subscribed to.
 func (p *Plugin) getWebhookSubscriptionForSite(siteID string) ([]string, error) {
 	webhookIdentifier := siteID + NetlifyWebhookSubscriptionsKVIdentifier
 
