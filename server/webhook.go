@@ -32,6 +32,17 @@ func (p *Plugin) handleWebhooks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Separate out webhook secret from the incoming webhook, if any.
+	webhookPathsSplitted := strings.Split(r.URL.Path, "/")
+	incomingWebhookSecretKey := webhookPathsSplitted[len(webhookPathsSplitted)-1]
+
+	storedWebhookSecretKey := p.getConfiguration().WebhookSecret
+
+	if incomingWebhookSecretKey != storedWebhookSecretKey {
+		http.Error(w, "Incoming webhook missing secret key", http.StatusBadRequest)
+		return
+	}
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Corrupt incoming webhook, Body data couldn't be read", http.StatusBadRequest)
@@ -140,6 +151,7 @@ func (p *Plugin) handleSiteSelectionForSubscribeCommand(w http.ResponseWriter, r
 	selectedOptionsValue := strings.Fields(selectedOption)
 	siteIDToSubscribe := selectedOptionsValue[0]
 	siteNameToSubscribe := selectedOptionsValue[1]
+	webhookSecret := p.getConfiguration().WebhookSecret
 
 	// Check if this was passed within Mattermost
 	authUserID := r.Header.Get("Mattermost-User-ID")
@@ -226,7 +238,7 @@ func (p *Plugin) handleSiteSelectionForSubscribeCommand(w http.ResponseWriter, r
 		},
 	}
 
-	// Present the user with the site dropdown updated
+	// Present the user with the site dropdown now disabled for further selection
 	p.API.UpdateEphemeralPost(userID, subscribeCommandPost)
 
 	p.sendMessageFromBot(channelIDToSubscribe, "", false,
@@ -253,7 +265,7 @@ func (p *Plugin) handleSiteSelectionForSubscribeCommand(w http.ResponseWriter, r
 
 	siteHooks := listHooksBySiteIDResponse.GetPayload()
 
-	var mattermostSubscriptionWebhookURL string = fmt.Sprintf("%v/plugins/netlify/webhook", *siteURL)
+	var mattermostSubscriptionWebhookURL string = fmt.Sprintf("%v/plugins/netlify/webhook/%v", *siteURL, webhookSecret)
 	var isMMHookForBuildStartPresent bool = false
 	var isMMHookForBuildCompletePresent bool = false
 	var isMMHookForBuildFailPresent bool = false

@@ -26,7 +26,8 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	// Identify unique routes of the API
 	route := r.URL.Path
 
-	if route == "/webhook" {
+	// Routes for webhook are of form /webhook/WEBHOOK_SECRET
+	if strings.HasPrefix(route, "/webhook") {
 		p.handleWebhooks(w, r)
 	}
 	// When user execute /connect go to netlify auth page

@@ -23,6 +23,7 @@ type configuration struct {
 	NetlifyOAuthClientID string
 	NetlifyOAuthSecret   string
 	EncryptionKey        string
+	WebhookSecret        string
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -48,6 +49,10 @@ func (c *configuration) IsValid() error {
 
 	if c.EncryptionKey == "" {
 		return fmt.Errorf("Must have Encryption key generated and stored in plugin settings")
+	}
+
+	if c.WebhookSecret == "" {
+		return fmt.Errorf("Must have Webhook secret generated and stored in plugin settings")
 	}
 
 	return nil
