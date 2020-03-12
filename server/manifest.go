@@ -63,6 +63,14 @@ const manifestStr = `
         "help_text": "The AES encryption key internally used in plugin to encrypt stored access tokens.",
         "placeholder": "Generate the key and store before connecting the account",
         "default": null
+      },
+      {
+        "key": "WebhookSecret",
+        "display_name": "Webhook Secret Key",
+        "type": "generated",
+        "help_text": "This Secret key will be used to uniquely identify incoming webhook requests from Netlify.",
+        "placeholder": "Generate the key and store before connecting the account",
+        "default": null
       }
     ]
   }

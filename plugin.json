@@ -46,6 +46,13 @@
                 "type": "generated",
                 "placeholder": "Generate the key and store before connecting the account",
                 "help_text": "The AES encryption key internally used in plugin to encrypt stored access tokens."
+            },
+            {
+                "key": "WebhookSecret",
+                "display_name": "Webhook Secret Key",
+                "type": "generated",
+                "placeholder": "Generate the key and store before connecting the account",
+                "help_text": "This Secret key will be used to uniquely identify incoming webhook requests from Netlify."
             }
         ]
     }
