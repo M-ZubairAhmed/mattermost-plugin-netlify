@@ -148,39 +148,3 @@ const (
 	MattermostChannelDM      string = "D"
 	MattermostChannelGroup   string = "G"
 )
-
-// MattermostGetSitePost is post template used for site command
-const MattermostGetSitePost string = `#### Netlify site information for %v
-
-##### Basic details
-*Name* : **%v** - %v
-*URL* : %v
-*Created at* : %v
-*Published at* : %v
-*Managed by* : %v
-
-##### Domain details
-*Custom domain* : %v
-*Domain aliases* : %v
-*Netlify managed DNS* : %v
-*Enabled SSL* : %v
-*Forced enabled SSL* : %v
-
-##### Repository details
-*Repository* : %v
-*Repository public status* : %v
-*Private logs* : %v
-
-##### Enhancements (%v)
-*Stylesheets*
-*Bundle CSS* : %v
-*Minify CSS* : %v
-
-*Javascript*
-*Bundle JS* : %v
-*Minify JS* : %v
-
-*Pretty URL* : %v
-*Optimize images* : %v
-
-**[Manage site at Netlify App](%v)**`

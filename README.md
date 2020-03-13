@@ -4,7 +4,7 @@
   <h5 align="center"><i>A two way integration plugin between Mattermost and Netlify.</i></h5>
 </p>
 
-> [Plugin walkthrough video](https://youtu.be/SMEpQZV5_08) for [Mattermost-Bot-Hackfest](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
+> [Plugin walk through video](https://youtu.be/SMEpQZV5_08) for [Mattermost-Bot-Hackfest](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
 
 ## Table of content
 - [Installation](#installation)
@@ -16,8 +16,6 @@
   * [Slash commands](#slash-commands)
       + [Connect](#connect-command)
       + [Disconnect](#disconnect-command)
-      + [Me](#me-command)
-      + [Help](#help-command)
       + [List](#list-command)
       + [List IDs](#list-id-command)
       + [Deploy](#deploy-command)
@@ -25,6 +23,9 @@
       + [Subscribe](#subscribe-command)
       + [Unsubscribe](#unsubscribe-command)
       + [Subscriptions](#subscriptions-command)
+      + [Site](#site-command)
+      + [Me](#me-command)
+      + [Help](#help-command)
    * [Notifications](#notifications)
       + [Build starting notification](#build-started)
       + [Build successful notification](#build-successfull)
@@ -97,20 +98,6 @@ This commands clears out authentication between netlify and mattermost. All the 
 
 ![disconnect-gif](https://user-images.githubusercontent.com/17708702/75366081-18b48f80-58b6-11ea-9157-dc6b9fd21099.gif)
 
-### Me command
-`/netlify me`
-
-This commands show relevant information of the Netlify account connected to Mattermost via the plugin.
-
-![me-gif](https://user-images.githubusercontent.com/17708702/75216034-93808c00-578a-11ea-9262-4d1fa6d7ab59.gif)
-
-### Help command
-`/netlify help`
-
-It shows all the commands which are available for user to interact with Netlify bot.
-
-![help-gif](https://user-images.githubusercontent.com/17708702/75640824-31160880-5c2e-11ea-83dd-8ee94311a92a.gif)
-
 ### List command
 `/netlify list`
 
@@ -159,6 +146,28 @@ It unsubscribes the channel from where command was executed from all Netlify sit
 Lists out all your Netlify site(s) subscribed with the channel to receive build notifications.
 
 ![subscribes](https://user-images.githubusercontent.com/17708702/76461068-159dc100-63d7-11ea-944a-9afaf314981d.gif)
+
+### Site command
+`/netlify site`
+
+Shows in depth information of your Netlify site.
+
+![site](https://user-images.githubusercontent.com/17708702/76595570-db761180-64f3-11ea-8b0f-c6c2a35491ec.gif)
+
+### Me command
+`/netlify me`
+
+This commands show relevant information of the Netlify account connected to Mattermost via the plugin.
+
+![me-gif](https://user-images.githubusercontent.com/17708702/75216034-93808c00-578a-11ea-9262-4d1fa6d7ab59.gif)
+
+### Help command
+`/netlify help`
+
+It shows all the commands which are available for user to interact with Netlify bot.
+
+![help-gif](https://user-images.githubusercontent.com/17708702/75640824-31160880-5c2e-11ea-83dd-8ee94311a92a.gif)
+
 
 ### Notifications
 This plugin comes with beautiful, slick and condensed notifications for your Netlify sites. Which when subscribed can show information regarding your builds.

@@ -17,7 +17,7 @@ func getCommand() *model.Command {
 		DisplayName:      "Netlify",
 		Description:      "Integration with Netlify",
 		AutoComplete:     true,
-		AutoCompleteDesc: "Available commands: connect, disconnect, list, list id, deploy, rollback, subscribe, unsubscribe, subscriptions, me, help",
+		AutoCompleteDesc: "Available commands: connect, disconnect, list, list id, deploy, rollback, subscribe, unsubscribe, subscriptions, site, me, help",
 		AutoCompleteHint: "[command]",
 	}
 }
