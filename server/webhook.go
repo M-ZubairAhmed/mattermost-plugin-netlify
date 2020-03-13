@@ -241,7 +241,7 @@ func (p *Plugin) handleSiteSelectionForSubscribeCommand(w http.ResponseWriter, r
 	// Present the user with the site dropdown now disabled for further selection
 	p.API.UpdateEphemeralPost(userID, subscribeCommandPost)
 
-	p.sendMessageFromBot(channelIDToSubscribe, "", false,
+	p.sendMessageFromBot(channelIDToSubscribe, userID, true,
 		fmt.Sprintf(":hourglass: Hang on while subscribring is in progress for **%v** channel with **%v** build notifications.", channelNameToSubscribe, siteNameToSubscribe),
 	)
 

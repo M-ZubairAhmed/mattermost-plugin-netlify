@@ -59,6 +59,10 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 	if route == "/command/subscribe" {
 		p.handleSiteSelectionForSubscribeCommand(w, r)
 	}
+
+	if route == "/command/site" {
+		p.handleSiteCommandResponse(w, r)
+	}
 }
 
 func (p *Plugin) getOAuthConfig() *oauth2.Config {
@@ -750,4 +754,247 @@ func (p *Plugin) handleRollbackBuildSelectResponse(w http.ResponseWriter, r *htt
 			":satellite: Mattermost Netlify Bot has successfully asked Netlify to rollback **%v** site to a previously version by ID %v.\n"+
 				"*Since this is an update, you probably will not receive a build notification, You can visit the URL to see if its rolled back.*", siteName, siteDeployID),
 	})
+}
+
+func (p *Plugin) handleSiteCommandResponse(w http.ResponseWriter, r *http.Request) {
+	// Check if this was passed within Mattermost
+	authUserID := r.Header.Get("Mattermost-User-ID")
+	if authUserID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse the JSON
+	intergrationResponseFromCommand := model.PostActionIntegrationRequestFromJson(r.Body)
+
+	userID := intergrationResponseFromCommand.UserId
+	channelID := intergrationResponseFromCommand.ChannelId
+	selectedOption := intergrationResponseFromCommand.Context["selected_option"].(string)
+	originalPostID := intergrationResponseFromCommand.PostId
+
+	// Bifurcate the received value to get id and name of site
+	selectedOptionsValue := strings.Fields(selectedOption)
+
+	receivedActionSecret := intergrationResponseFromCommand.Context["actionSecret"].(string)
+	storedActionSecret := p.getConfiguration().EncryptionKey
+
+	// If action was not initiated from within MM
+	if storedActionSecret != receivedActionSecret {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract the selected site information
+	siteID := selectedOptionsValue[0]
+	siteName := selectedOptionsValue[1]
+
+	// Check if any is empty
+	if len(selectedOptionsValue) == 0 || len(siteID) == 0 || len(siteName) == 0 {
+		p.sendMessageFromBot(channelID, userID, true, fmt.Sprintf(
+			":exclamation: One of more values while selecting from dropdown were empty"))
+		http.Error(w, "One of more values while selecting from dropdown were empty", http.StatusNotAcceptable)
+		return
+	}
+
+	// Construct the same dropdown to update the original dropdown,
+	subscribeCommandDropdown := &model.PostAction{
+		Type:     model.POST_ACTION_TYPE_SELECT,
+		Name:     siteName,
+		Disabled: true,
+		Options:  []*model.PostActionOptions{},
+	}
+
+	subscribeCommandAttachment := &model.SlackAttachment{
+		Pretext: "View information of Netlify site",
+		Title:   "Select a site you want to view more information about.",
+		Actions: []*model.PostAction{subscribeCommandDropdown},
+	}
+
+	subscribeCommandPost := &model.Post{
+		Id:        originalPostID,
+		UserId:    p.BotUserID,
+		ChannelId: channelID,
+		Props: map[string]interface{}{
+			"attachments": []*model.SlackAttachment{subscribeCommandAttachment},
+		},
+	}
+
+	// Present the user with the site dropdown now disabled for further selection
+	p.API.UpdateEphemeralPost(userID, subscribeCommandPost)
+
+	// Post a loading post
+	p.sendMessageFromBot(channelID, userID, true,
+		fmt.Sprintf(":hourglass: Hang on while we fetch details of your Netlify site : %v.", siteName),
+	)
+
+	// Get the netlify client
+	netlifyClient, ctx := p.getNetlifyClient()
+	netlifyClientCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendMessageFromBot(channelID, userID, true, fmt.Sprintf(
+			":exclamation: Authentication failed\n"+
+				"*Error : %v*", err.Error()))
+		http.Error(w, "Authentication failed", http.StatusUnauthorized)
+		return
+	}
+
+	getSiteParams := &netlifyPlumbingModels.GetSiteParams{
+		SiteID:  siteID,
+		Context: ctx,
+	}
+
+	// Get the site information from API
+	getSiteResponse, err := netlifyClient.Operations.GetSite(getSiteParams, netlifyClientCredentials)
+	if err != nil {
+		p.sendMessageFromBot(channelID, userID, true, fmt.Sprintf(
+			":exclamation: Failed to get **%v** site information.\n"+
+				"*Error : %v*", siteName, err.Error()))
+		http.Error(w, "Failed to getSite", http.StatusBadRequest)
+		return
+	}
+
+	site := getSiteResponse.GetPayload()
+
+	const iconChecked string = ":white_check_mark:"
+	const iconUnchecked string = ":negative_squared_cross_mark:"
+	const iconNone string = ":zero:"
+	const iconError string = ":interrobang:"
+
+	var siteStatus string = ""
+	if len(site.State) != 0 {
+		if site.State == NetlifyEventStateDeployCreated || site.State == "current" {
+			siteStatus = "Status Live :large_blue_circle:"
+		} else if site.State == NetlifyEventStateDeployBuilding {
+			siteStatus = "Status Building :white_circle:"
+		} else if site.State == NetlifyEventStateDeployFailed {
+			siteStatus = "Status Failed :red_circle:"
+		} else {
+			siteStatus = site.State
+		}
+	}
+
+	var siteCreatedAt string = iconError
+	if len(site.CreatedAt) != 0 {
+		siteCreatedAtParsed, err := time.Parse(NetlifyDateLayout, site.CreatedAt)
+		if err == nil {
+			siteCreatedAt = siteCreatedAtParsed.Format(time.RFC822)
+		}
+	}
+
+	var sitePublishedAt string = iconError
+	if len(site.CreatedAt) != 0 {
+		sitePublishedAtParsed, err := time.Parse(NetlifyDateLayout, site.UpdatedAt)
+		if err == nil {
+			sitePublishedAt = sitePublishedAtParsed.Format(time.RFC822)
+		}
+	}
+
+	var siteCustomDomain string = iconNone
+	if len(site.CustomDomain) != 0 {
+		siteCustomDomain = site.CustomDomain
+	}
+
+	var siteDomainAliases string
+	if len(site.DomainAliases) != 0 {
+		for _, domainAlias := range site.DomainAliases {
+			siteDomainAliases = siteDomainAliases + " / " + domainAlias
+		}
+	} else {
+		siteDomainAliases = iconNone
+	}
+
+	var siteNetlifyManagedDNS string = iconUnchecked
+	if site.ManagedDNS == true {
+		siteNetlifyManagedDNS = iconChecked
+	}
+
+	var siteEnabledSSL string = iconUnchecked
+	if site.Ssl == true {
+		siteEnabledSSL = iconChecked
+	}
+
+	var siteForceEnabledSSL string = iconUnchecked
+	if site.ForceSsl == true {
+		siteForceEnabledSSL = iconChecked
+	}
+
+	var siteLogsPriv string = iconUnchecked
+	if site.BuildSettings.PrivateLogs == true {
+		siteForceEnabledSSL = iconChecked
+	}
+
+	var siteEnchance string = iconUnchecked + " Switched off"
+	if site.ProcessingSettings.Skip == false {
+		siteEnchance = iconChecked + " Currently Active"
+	}
+
+	var siteBundleCSS string = iconUnchecked
+	if site.ProcessingSettings.CSS.Bundle == true {
+		siteBundleCSS = iconChecked
+	}
+
+	var siteMinifyCSS string = iconUnchecked
+	if site.ProcessingSettings.CSS.Minify == true {
+		siteMinifyCSS = iconChecked
+	}
+
+	var siteMinifyJS string = iconUnchecked
+	if site.ProcessingSettings.Js.Minify == true {
+		siteMinifyJS = iconChecked
+	}
+
+	var siteBundleJS string = iconUnchecked
+	if site.ProcessingSettings.Js.Bundle == true {
+		siteBundleJS = iconChecked
+	}
+
+	var sitePrettyURL string = iconUnchecked
+	if site.ProcessingSettings.HTML.PrettyUrls == true {
+		sitePrettyURL = iconChecked
+	}
+
+	var siteOptimizeImg string = iconUnchecked
+	if site.ProcessingSettings.Images.Optimize == true {
+		siteOptimizeImg = iconChecked
+	}
+
+	siteInformationMessage := fmt.Sprintf(`#### :page_with_curl: Netlify's site information for %v - %v
+##### Basic details
+*Name* : **%v**
+*URL* : %v
+*Created at* : %v
+*Updated at* : %v
+*Managed by* : %v
+
+##### Domain details
+*Custom domain / Revere proxy* : %v
+*Domain aliases* : %v
+*Netlify managed DNS* : %v
+*Enabled SSL* : %v
+*Forced enabled SSL* : %v
+
+##### Repository details
+*Repository* : %v
+*Branch* : %v
+*Private logs* : %v
+
+##### Enhancements - %v
+*Stylesheets*
+*Bundle up* : %v
+*Minify* : %v
+
+*Javascript*
+*Bundle up* : %v
+*Minify* : %v
+
+*Pretty URL* : %v
+*Optimize images* : %v
+
+**[Manage site at Netlify App :arrow_right:](%v)**`, siteName, siteStatus, siteName, site.URL, siteCreatedAt, sitePublishedAt, site.AccountName,
+		siteCustomDomain, siteDomainAliases, siteNetlifyManagedDNS, siteEnabledSSL, siteForceEnabledSSL,
+		site.BuildSettings.RepoURL, site.BuildSettings.RepoBranch, siteLogsPriv,
+		siteEnchance, siteBundleCSS, siteMinifyCSS, siteBundleJS, siteMinifyJS, sitePrettyURL, siteOptimizeImg, site.AdminURL)
+
+	p.sendMessageFromBot(channelID, "", false, siteInformationMessage)
+
 }
