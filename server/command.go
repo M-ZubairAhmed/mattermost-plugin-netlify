@@ -92,6 +92,10 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		return p.handleSubscriptionsCommand(args)
 	}
 
+	if action == "site" {
+		return p.handleSiteCommand(args)
+	}
+
 	// "/netlify xyz"
 	return p.handleUnknownCommand(c, args, action)
 
@@ -793,6 +797,87 @@ func (p *Plugin) handleSubscriptionsCommand(args *model.CommandArgs) (*model.Com
 	}
 
 	p.sendMessageFromBot(channelID, "", false, postMessageForSubscriptions)
+
+	return &model.CommandResponse{}, nil
+}
+
+func (p *Plugin) handleSiteCommand(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+	channelID := args.ChannelId
+	userID := args.UserId
+	actionSecret := p.getConfiguration().EncryptionKey
+	siteURL := p.API.GetConfig().ServiceSettings.SiteURL
+
+	// Get the Netlify library client for interacting with netlify api
+	netlifyClient, _ := p.getNetlifyClient()
+
+	// Get Netlify credentials
+	netlifyCredentials, err := p.getNetlifyClientCredentials(userID)
+	if err != nil {
+		p.sendMessageFromBot(channelID, userID, true,
+			fmt.Sprintf("Authentication failed : %v", err.Error()),
+		)
+		return &model.CommandResponse{}, nil
+	}
+
+	// Execute list site func from netlify library
+	listSitesResponse, err := netlifyClient.Operations.ListSites(nil, netlifyCredentials)
+	if err != nil {
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf("Failed to receive sites list from Netlify : %v", err.Error()))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Get all sites from the response payload
+	sites := listSitesResponse.GetPayload()
+
+	// If user has no netlify sites
+	if len(sites) == 0 {
+		p.sendMessageFromBot(args.ChannelId, args.UserId, true, fmt.Sprintf(":spider_web: You don't seem to have any Netlify sites"))
+		return &model.CommandResponse{}, nil
+	}
+
+	// Create an empty array of options we will be using for dropdown
+	var sitesDropdownOptions []*model.PostActionOptions
+
+	// Loop over all the sites
+	for _, site := range sites {
+		siteOption := &model.PostActionOptions{
+			Text:  fmt.Sprintf("%v", site.Name),
+			Value: fmt.Sprintf("%v %v", site.ID, site.Name),
+		}
+		// Store name, id information of all the sites inside the dropdown option
+		sitesDropdownOptions = append(sitesDropdownOptions, siteOption)
+	}
+
+	// Construct a dropdown
+	sitesDropdown := &model.PostAction{
+		Type:     model.POST_ACTION_TYPE_SELECT,
+		Name:     "Select a site",
+		Disabled: false,
+		Options:  sitesDropdownOptions,
+		Integration: &model.PostActionIntegration{
+			URL: fmt.Sprintf("%s/plugins/netlify/command/site", *siteURL),
+			Context: map[string]interface{}{
+				"actionSecret": actionSecret,
+			},
+		},
+	}
+
+	siteCommandAttachment := &model.SlackAttachment{
+		Pretext: "View information of Netlify site",
+		Title:   "Select a site you want to view more information about.",
+		Actions: []*model.PostAction{sitesDropdown},
+	}
+
+	siteCommandPost := &model.Post{
+		UserId:    p.BotUserID,
+		ChannelId: args.ChannelId,
+		Props: map[string]interface{}{
+			"attachments": []*model.SlackAttachment{siteCommandAttachment},
+		},
+	}
+
+	// Present the user with the site dropdown
+	p.API.SendEphemeralPost(userID, siteCommandPost)
 
 	return &model.CommandResponse{}, nil
 }
