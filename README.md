@@ -4,8 +4,6 @@
   <h5 align="center"><i>A two way integration plugin between Mattermost and Netlify.</i></h5>
 </p>
 
-> [Plugin walk through video](https://youtu.be/SMEpQZV5_08) for [Mattermost-Bot-Hackfest](https://www.hackerearth.com/challenges/hackathon/mattermost-bot-hackfest)
-
 ## Table of content
 - [Installation](#installation)
 - [Setting up](#setting-up)
