@@ -4,6 +4,8 @@
   <h5 align="center"><i>A two way integration plugin between Mattermost and Netlify.</i></h5>
 </p>
 
+![working of netlify plugin](https://user-images.githubusercontent.com/17708702/78877687-c92ebb00-7a40-11ea-94ab-f368cbcf9ff4.png)
+
 ## Table of content
 - [Installation](#installation)
 - [Setting up](#setting-up)
